@@ -1,0 +1,157 @@
+:root {
+  --bg-1: #3a241d;
+  --bg-2: #6b4e41;
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-2: rgba(255, 255, 255, 0.12);
+  --stroke: rgba(255, 255, 255, 0.18);
+  --txt: #f1ded0;
+  --txt-dim: #edd7cc;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.2), inset 0 1px rgba(255, 255, 255, 0.1);
+  --radius-xl: 28px;
+  --radius-xxl: 16px;
+  --gap: 22px;
+  --tile-pad: 16px 8px;
+  --tile-font: 24px;
+}
+
+/* Базовая раскладка */
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Arial,
+    "Noto Sans", sans-serif;
+  color: var(--txt);
+  background-image: url("../img/background.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: env(safe-area-inset-top, 18px) 18px
+    calc(env(safe-area-inset-bottom, 18px) + 18px);
+  min-height: 100%;
+  position: relative;
+  isolation: isolate;
+}
+
+header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  margin-top: 50px;
+  position: relative;
+}
+
+h1 {
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.3px;
+  color: var(--txt);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+  font-size: clamp(28px, 7vw, 44px);
+}
+h1 .sub {
+  display: block;
+  color: var(--txt-dim);
+  font-weight: 700;
+}
+
+.avatar {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  display: block;
+  overflow: hidden;
+  flex: 0 0 auto;
+  position: relative;
+}
+/* Список плиток */
+.stack {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-height: 68px;
+  min-height: 68px;
+  border-radius: var(--radius-xxl);
+  border: 1px solid var(--stroke);
+  box-shadow: var(--shadow);
+  color: var(--txt);
+  text-decoration: none;
+  font-weight: 500;
+  line-height: 1.18;
+  font-size: var(--tile-font);
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(1px) saturate(100%);
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+  background-color: ;
+}
+
+/* Световая линия внутри плитки */
+.tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.07) 48%,
+      transparent 52%
+    )
+    no-repeat;
+  background-size: 180% 100%;
+  transform: translateZ(0);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  transition: background-position 0.6s ease;
+}
+
+.tile:focus-visible {
+  outline: 3px solid #ffe1c8;
+  outline-offset: 2px;
+}
+.tile:hover::after {
+  background-position: -10% 0;
+}
+.tile:active {
+  transform: translateY(1px) scale(0.997);
+}
+
+/* Слабая «дымка» под крупными плитками (как на скрине) */
+.tile.is-large {
+  max-height: 109px;
+  height: 109px;
+  font-size: 34px;
+}
+
+/* Мелкие детали */
+.muted {
+  opacity: 0.86;
+}
+
+/* Умеряем анимации */
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile::after {
+    transition: none;
+  }
+}
