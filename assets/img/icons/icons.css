@@ -1,0 +1,41 @@
+@charset "UTF-8";
+
+.icon {
+  display: inline-block;
+  height: 1em;
+  width: 1em;
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+}
+.icon-play {
+  mask-image: url(play.svg);
+  -webkit-mask-image: url(play.svg);
+}
+.icon-play2 {
+  mask-image: url(play2.svg);
+  -webkit-mask-image: url(play2.svg);
+}
+.icon-pause {
+  mask-image: url(pause.svg);
+  -webkit-mask-image: url(pause.svg);
+}
+.icon-interface{
+      mask-image: url(interface.svg);
+  -webkit-mask-image: url(interface.svg);
+}
+.icon-freeIcon{
+      mask-image: url(freeIcon.svg);
+  -webkit-mask-image: url(freeIcon.svg);
+}
+.icon-media{
+         mask-image: url(media.svg);
+  -webkit-mask-image: url(media.svg);
+}
+.icon-user{
+         mask-image: url(user.svg);
+  -webkit-mask-image: url(user.svg);
+}

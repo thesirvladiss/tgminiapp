@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Подкаст Медитация</title>
+    <meta name="color-scheme" content="dark light" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <main class="app">
+        <div class="podcasts-img">
+          <img src="assets/img/podcastsImg.webp" alt="" />
+        </div>
+
+        <div class="podcast-deatil-titles">
+          <span>25.06.2025г.</span>
+          <h2>Медитация ОШО</h2>
+          <p>
+            Lorem ipsum dolor sit amet consectetur. Mauris amet nibh
+            sollicitudin. Lorem ipsum dolor sit amet consectetur. Mauris amet
+            nibh sollicitudin.
+          </p>
+        </div>
+
+        <div class="podcast" data-podcast>
+          <button
+            class="podcast__bigplay"
+            type="button"
+            aria-label="Воспроизвести"
+            data-play-toggle
+          >
+           
+          
+            <i class="icon icon-play2 podcast__bigplay-icon"></i>
+             <i class="icon icon-pause "></i>
+          </button>
+
+          <div class="podcast__progress">
+            
+
+            <input
+              class="podcast__range"
+              type="range"
+              min="0"
+              value="0"
+              step="0.01"
+              aria-label="Позиция воспроизведения"
+              data-seek
+              name="range"
+            />
+
+        
+          </div>
+          <div class="podcast__times">
+            <span class="podcast__time" data-current-time>00:00</span>
+                 <span class="podcast__time" data-remaining-time>-00:00</span>
+          </div>
+
+          <div class="podcast-tag" aria-labelledby="podcast-title">
+            Это ваш бесплатный подкаст
+          </div>
+
+          <audio
+            preload="metadata"
+            src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+            data-audio
+          ></audio>
+          
+        </div>
+      </main>
+      <div class="section-bg">
+        <img src="assets/img/background3.webp" alt="" />
+      </div>
+    </div>
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>
