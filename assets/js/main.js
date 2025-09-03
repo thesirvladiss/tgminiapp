@@ -110,3 +110,14 @@ range.addEventListener("pointerdown", (e) => {
   seekByPointerEvent(e);
 });
 });
+
+const items = document.querySelectorAll('.subscription-item');
+
+if (items.length > 0) {
+  items.forEach(item => {
+    item.addEventListener('click', () => {
+      items.forEach(el => el.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+}
