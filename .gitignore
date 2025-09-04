@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.cache/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual env
+.venv/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Databases and runtime data
+/app.db
+/data/
+/uploads/
+*.db-shm
+*.db-wal
+
+# Editors/IDE
+.vscode/
+.idea/
+
