@@ -56,3 +56,32 @@ Require stack:
     at Module.load (node:internal/modules/cjs/loader:1275:32)
     at Module._load (node:internal/modules/cjs/loader:1096:12)
     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+2025-09-04 09:03:08 [ERROR]: uncaughtException: Cannot find module './middleware/errorHandler'
+Require stack:
+- /Users/macbook/Documents/testminiapp/backend/server.js
+Error: Cannot find module './middleware/errorHandler'
+Require stack:
+- /Users/macbook/Documents/testminiapp/backend/server.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Module.require (node:internal/modules/cjs/loader:1298:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/Users/macbook/Documents/testminiapp/backend/server.js:11:22)
+    at Module._compile (node:internal/modules/cjs/loader:1529:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+    at Module.load (node:internal/modules/cjs/loader:1275:32)
+    at Module._load (node:internal/modules/cjs/loader:1096:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12) {"error":{"code":"MODULE_NOT_FOUND","requireStack":["/Users/macbook/Documents/testminiapp/backend/server.js"]},"exception":true,"date":"Thu Sep 04 2025 09:03:08 GMT+0300 (Moscow Standard Time)","process":{"pid":76695,"uid":501,"gid":20,"cwd":"/Users/macbook/Documents/testminiapp/backend","execPath":"/opt/homebrew/Cellar/node@20/20.19.4/bin/node","version":"v20.19.4","argv":["/opt/homebrew/Cellar/node@20/20.19.4/bin/node","/Users/macbook/Documents/testminiapp/backend/server.js"],"memoryUsage":{"rss":69189632,"heapTotal":34422784,"heapUsed":22533408,"external":20490673,"arrayBuffers":18262463}},"os":{"loadavg":[5.12060546875,4.52783203125,3.93310546875],"uptime":2585274},"trace":[{"column":15,"file":"node:internal/modules/cjs/loader","function":"Module._resolveFilename","line":1212,"method":"_resolveFilename","native":false},{"column":27,"file":"node:internal/modules/cjs/loader","function":"Module._load","line":1043,"method":"_load","native":false},{"column":19,"file":"node:internal/modules/cjs/loader","function":"Module.require","line":1298,"method":"require","native":false},{"column":18,"file":"node:internal/modules/helpers","function":"require","line":182,"method":null,"native":false},{"column":22,"file":"/Users/macbook/Documents/testminiapp/backend/server.js","function":null,"line":11,"method":null,"native":false},{"column":14,"file":"node:internal/modules/cjs/loader","function":"Module._compile","line":1529,"method":"_compile","native":false},{"column":10,"file":"node:internal/modules/cjs/loader","function":"Module._extensions..js","line":1613,"method":".js","native":false},{"column":32,"file":"node:internal/modules/cjs/loader","function":"Module.load","line":1275,"method":"load","native":false},{"column":12,"file":"node:internal/modules/cjs/loader","function":"Module._load","line":1096,"method":"_load","native":false},{"column":12,"file":"node:internal/modules/run_main","function":"Function.executeUserEntryPoint [as runMain]","line":164,"method":"executeUserEntryPoint [as runMain]","native":false}]}
+Error: Cannot find module './middleware/errorHandler'
+Require stack:
+- /Users/macbook/Documents/testminiapp/backend/server.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Module.require (node:internal/modules/cjs/loader:1298:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/Users/macbook/Documents/testminiapp/backend/server.js:11:22)
+    at Module._compile (node:internal/modules/cjs/loader:1529:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+    at Module.load (node:internal/modules/cjs/loader:1275:32)
+    at Module._load (node:internal/modules/cjs/loader:1096:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
