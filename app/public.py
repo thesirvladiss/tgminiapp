@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Dict, Optional
 from fastapi import APIRouter, Request, Depends, Header, Form
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -52,6 +53,18 @@ def telegram_auth(
         db.commit()
         db.refresh(user)
     request.session["telegram_id"] = telegram_id
+    return {"ok": True}
+
+
+@router.post("/debug/log")
+async def client_debug_log(request: Request):
+    try:
+        data: Dict[str, Any] = await request.json()
+    except Exception:
+        data = {"error": "invalid_json"}
+    logging.getLogger("app.client").info(
+        "client_log: %s", {"ip": getattr(request.client, "host", "-"), "data": data}
+    )
     return {"ok": True}
 
 

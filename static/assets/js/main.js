@@ -130,12 +130,19 @@ try {
     const sentKey = 'tg_init_sent';
     if (!sessionStorage.getItem(sentKey)) {
       const body = new URLSearchParams({ init_data: initData }).toString();
+      // client debug logger
+      fetch('/api/debug/log', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({
+        hint: 'before_auth', hasWebApp: true, hasInitData: !!initData, initDataLen: (initData||'').length,
+        ua: navigator.userAgent, ref: document.referrer
+      }) }).catch(()=>{});
       fetch('/api/telegram/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body
       }).then(r => r.json()).then((j) => {
-        console.log('tg auth resp', j);
+        fetch('/api/debug/log', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({
+          hint: 'after_auth', resp: j
+        }) }).catch(()=>{});
       }).catch((e) => { console.log('tg auth err', e); });
       sessionStorage.setItem(sentKey, '1');
     }
