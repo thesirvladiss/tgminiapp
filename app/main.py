@@ -33,8 +33,15 @@ def create_app() -> FastAPI:
     app.include_router(admin_router)
     app.include_router(public_router)
 
+    def _require_telegram(request: Request):
+        if not request.session.get("telegram_id"):
+            return templates.TemplateResponse("front/loader.html", {"request": request})
+        return None
+
     @app.get("/", response_class=HTMLResponse)
     def home(request: Request, db: Session = Depends(get_db)):
+        if not request.session.get("telegram_id"):
+            return templates.TemplateResponse("front/loader.html", {"request": request})
         cards = (
             db.query(models.ProjectCard)
             .order_by(models.ProjectCard.order.asc(), models.ProjectCard.id.asc())
@@ -46,6 +53,8 @@ def create_app() -> FastAPI:
 
     @app.get("/podcasts", response_class=HTMLResponse)
     def podcast_list(request: Request, db: Session = Depends(get_db)):
+        if not request.session.get("telegram_id"):
+            return templates.TemplateResponse("front/loader.html", {"request": request})
         podcasts = (
             db.query(models.Podcast)
             .filter(models.Podcast.is_published.is_(True))
@@ -63,6 +72,8 @@ def create_app() -> FastAPI:
         preview: int | None = None,
         db: Session = Depends(get_db),
     ):
+        if not request.session.get("telegram_id"):
+            return templates.TemplateResponse("front/loader.html", {"request": request})
         podcast = db.get(models.Podcast, podcast_id)
         if not podcast:
             return RedirectResponse("/podcasts")
@@ -96,6 +107,8 @@ def create_app() -> FastAPI:
 
     @app.get("/free-issue", response_class=HTMLResponse)
     def free_issue(podcast_id: int, request: Request, db: Session = Depends(get_db)):
+        if not request.session.get("telegram_id"):
+            return templates.TemplateResponse("front/loader.html", {"request": request})
         podcast = db.get(models.Podcast, podcast_id)
         if not podcast:
             return RedirectResponse("/podcasts")
@@ -105,6 +118,8 @@ def create_app() -> FastAPI:
 
     @app.get("/checkout", response_class=HTMLResponse)
     def checkout(podcast_id: int | None = None, request: Request = None):
+        if request and not request.session.get("telegram_id"):
+            return templates.TemplateResponse("front/loader.html", {"request": request})
         return templates.TemplateResponse(
             "front/subscription.html", {"request": request, "podcast_id": podcast_id}
         )
@@ -116,6 +131,8 @@ def create_app() -> FastAPI:
         tariff: str = Form(...),  # 'subscription' or 'single'
         podcast_id: int | None = Form(None),
     ):
+        if not request.session.get("telegram_id"):
+            return templates.TemplateResponse("front/loader.html", {"request": request})
         user = _get_or_create_user(request, db)
         if not user:
             return RedirectResponse("/", status_code=302)
@@ -149,17 +166,9 @@ app = create_app()
 
 # Helpers
 def _get_or_create_user(request: Request, db: Session) -> models.User | None:
-    # Try session
     tg_id = request.session.get("telegram_id")
-    # Fallbacks for local testing
     if not tg_id:
-        tg_id = request.query_params.get("tid") or request.headers.get("X-Telegram-User-Id")
-        if tg_id:
-            request.session["telegram_id"] = tg_id
-    if not tg_id:
-        # anonymous user - create a temporary one by IP for demo (optional)
-        tg_id = f"guest:{request.client.host}"
-        request.session["telegram_id"] = tg_id
+        return None
 
     user = db.query(models.User).filter(models.User.telegram_id == str(tg_id)).first()
     if not user:
