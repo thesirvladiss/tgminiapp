@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI, Depends, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -35,12 +36,19 @@ def create_app() -> FastAPI:
 
     def _require_telegram(request: Request):
         if not request.session.get("telegram_id"):
+            logging.getLogger("app.access").info(
+                "no telegram_id in session: path=%s, ip=%s, ua=%s",
+                request.url.path,
+                getattr(request.client, "host", "-"),
+                request.headers.get("user-agent", ""),
+            )
             return templates.TemplateResponse("front/loader.html", {"request": request})
         return None
 
     @app.get("/", response_class=HTMLResponse)
     def home(request: Request, db: Session = Depends(get_db)):
         if not request.session.get("telegram_id"):
+            logging.getLogger("app.access").info("home blocked, no telegram_id")
             return templates.TemplateResponse("front/loader.html", {"request": request})
         cards = (
             db.query(models.ProjectCard)
@@ -54,6 +62,7 @@ def create_app() -> FastAPI:
     @app.get("/podcasts", response_class=HTMLResponse)
     def podcast_list(request: Request, db: Session = Depends(get_db)):
         if not request.session.get("telegram_id"):
+            logging.getLogger("app.access").info("podcasts blocked, no telegram_id")
             return templates.TemplateResponse("front/loader.html", {"request": request})
         podcasts = (
             db.query(models.Podcast)
@@ -73,6 +82,7 @@ def create_app() -> FastAPI:
         db: Session = Depends(get_db),
     ):
         if not request.session.get("telegram_id"):
+            logging.getLogger("app.access").info("podcast_detail blocked, no telegram_id")
             return templates.TemplateResponse("front/loader.html", {"request": request})
         podcast = db.get(models.Podcast, podcast_id)
         if not podcast:
@@ -108,6 +118,7 @@ def create_app() -> FastAPI:
     @app.get("/free-issue", response_class=HTMLResponse)
     def free_issue(podcast_id: int, request: Request, db: Session = Depends(get_db)):
         if not request.session.get("telegram_id"):
+            logging.getLogger("app.access").info("free_issue blocked, no telegram_id")
             return templates.TemplateResponse("front/loader.html", {"request": request})
         podcast = db.get(models.Podcast, podcast_id)
         if not podcast:
@@ -119,6 +130,7 @@ def create_app() -> FastAPI:
     @app.get("/checkout", response_class=HTMLResponse)
     def checkout(podcast_id: int | None = None, request: Request = None):
         if request and not request.session.get("telegram_id"):
+            logging.getLogger("app.access").info("checkout blocked, no telegram_id")
             return templates.TemplateResponse("front/loader.html", {"request": request})
         return templates.TemplateResponse(
             "front/subscription.html", {"request": request, "podcast_id": podcast_id}
@@ -132,6 +144,7 @@ def create_app() -> FastAPI:
         podcast_id: int | None = Form(None),
     ):
         if not request.session.get("telegram_id"):
+            logging.getLogger("app.access").info("do_checkout blocked, no telegram_id")
             return templates.TemplateResponse("front/loader.html", {"request": request})
         user = _get_or_create_user(request, db)
         if not user:
