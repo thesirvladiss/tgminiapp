@@ -124,16 +124,19 @@ if (items.length > 0) {
 
 // Telegram initData auth hook
 try {
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
-    const initData = window.Telegram.WebApp.initData;
+  if (window.Telegram && window.Telegram.WebApp) {
+    const initData = window.Telegram.WebApp.initData || '';
     // send initData once per session
     const sentKey = 'tg_init_sent';
     if (!sessionStorage.getItem(sentKey)) {
+      const body = new URLSearchParams({ init_data: initData }).toString();
       fetch('/api/telegram/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ init_data: initData }).toString()
-      }).catch(() => {});
+        body
+      }).then(r => r.json()).then((j) => {
+        console.log('tg auth resp', j);
+      }).catch((e) => { console.log('tg auth err', e); });
       sessionStorage.setItem(sentKey, '1');
     }
   }

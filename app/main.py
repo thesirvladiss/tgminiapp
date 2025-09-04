@@ -1,4 +1,5 @@
 import logging
+import sys
 from fastapi import FastAPI, Depends, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,6 +16,15 @@ from .public import router as public_router
 
 
 def create_app() -> FastAPI:
+    # Configure logging for app.* loggers to stdout
+    root_logger = logging.getLogger()
+    if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
+        handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+        handler.setFormatter(formatter)
+        root_logger.addHandler(handler)
+    root_logger.setLevel(logging.INFO)
+
     app = FastAPI(title="PL Mini App")
 
     # Mount static and uploads

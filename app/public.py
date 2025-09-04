@@ -9,6 +9,7 @@ from .config import settings
 from . import models
 
 router = APIRouter(prefix="/api")
+logger = logging.getLogger("app.telegram")
 
 
 @router.post("/telegram/auth")

@@ -30,6 +30,12 @@ async def main() -> None:
 		)
 		await message.answer("Открой Mini App по кнопке ниже", reply_markup=kb)
 
+	# Ensure polling mode by removing any existing webhook
+	try:
+		await bot.delete_webhook(drop_pending_updates=True)
+	except Exception:
+		pass
+
 	await dp.start_polling(bot)
 
 
