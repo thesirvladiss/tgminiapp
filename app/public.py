@@ -68,3 +68,8 @@ async def client_debug_log(request: Request):
     return {"ok": True}
 
 
+@router.get("/whoami")
+def whoami(request: Request):
+    return {"telegram_id": request.session.get("telegram_id")}
+
+

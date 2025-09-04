@@ -143,6 +143,12 @@ try {
         fetch('/api/debug/log', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({
           hint: 'after_auth', resp: j
         }) }).catch(()=>{});
+        try {
+          if (j && j.ok) {
+            // refresh to let server-side routes see session telegram_id
+            window.location.replace('/');
+          }
+        } catch (e) {}
       }).catch((e) => { console.log('tg auth err', e); });
       sessionStorage.setItem(sentKey, '1');
     }
