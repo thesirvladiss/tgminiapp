@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Доступ к подкастам</title>
+    <meta name="color-scheme" content="dark light" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
+    <div class="wrapper">
+      <main class="app">
+        <header>
+          <h1>Доступ к подкастам</h1>
+        </header>
+
+        <div class="checkout-content">
+          <div class="checkout-description">
+            <p>Вы можете купить отдельный выпуск или оформить подписку.</p>
+          </div>
+
+          <div class="checkout-options">
+            <div class="checkout-option">
+              <input
+                type="radio"
+                id="single"
+                name="tariff"
+                value="single"
+                checked
+              />
+              <label for="single">
+                <div class="option-content">
+                  <div class="option-title">Разовый выпуск</div>
+                  <div class="option-price">200 ₽</div>
+                  <div class="option-description">
+                    Доступ к одному подкасту навсегда
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <div class="checkout-option">
+              <input
+                type="radio"
+                id="subscription"
+                name="tariff"
+                value="subscription"
+              />
+              <label for="subscription">
+                <div class="option-content">
+                  <div class="option-title">Подписка</div>
+                  <div class="option-price">1500 ₽</div>
+                  <div class="option-description">
+                    Доступ ко всем подкастам на месяц
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="checkout-summary">
+            <div class="summary-item">
+              <span>Выбранный тариф:</span>
+              <span id="selected-tariff">Разовый выпуск</span>
+            </div>
+            <div class="summary-item">
+              <span>Стоимость:</span>
+              <span id="selected-price">200 ₽</span>
+            </div>
+          </div>
+
+          <button class="btn-primary checkout-btn" onclick="proceedToPayment()">
+            Перейти к оплате
+          </button>
+        </div>
+      </main>
+
+      <div class="section-bg">
+        <img src="assets/img/background1.png" alt="" />
+      </div>
+    </div>
+
+    <script>
+      // Получаем параметры из URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const purchaseType = urlParams.get("type");
+      const podcastId = urlParams.get("id");
+
+      // Обновляем описание в зависимости от типа покупки
+      if (purchaseType === "podcast" && podcastId) {
+        document.querySelector(".checkout-description p").textContent =
+          "Вы можете купить этот выпуск или оформить подписку на все подкасты.";
+      }
+
+      // Обработчик изменения тарифа
+      document.querySelectorAll('input[name="tariff"]').forEach((radio) => {
+        radio.addEventListener("change", updateSummary);
+      });
+
+      function updateSummary() {
+        const selectedTariff = document.querySelector(
+          'input[name="tariff"]:checked'
+        ).value;
+        const tariffText =
+          selectedTariff === "single" ? "Разовый выпуск" : "Подписка";
+        const price = selectedTariff === "single" ? "200 ₽" : "1500 ₽";
+
+        document.getElementById("selected-tariff").textContent = tariffText;
+        document.getElementById("selected-price").textContent = price;
+      }
+
+      function proceedToPayment() {
+        const selectedTariff = document.querySelector(
+          'input[name="tariff"]:checked'
+        ).value;
+        const button = document.querySelector(".checkout-btn");
+
+        // Показываем состояние загрузки
+        button.textContent = "Обработка...";
+        button.disabled = true;
+
+        // Имитируем процесс оплаты
+        setTimeout(() => {
+          if (Math.random() > 0.1) {
+            // 90% успешных платежей
+            // Успешная оплата
+            if (selectedTariff === "subscription") {
+              window.location.href = "success.html?type=subscription";
+            } else {
+              window.location.href =
+                "success.html?type=podcast&id=" + podcastId;
+            }
+          } else {
+            // Ошибка платежа
+            showError("Платеж не прошёл. Попробуйте еще раз.");
+            button.textContent = "Перейти к оплате";
+            button.disabled = false;
+          }
+        }, 2000);
+      }
+
+      function showError(message) {
+        const toast = document.createElement("div");
+        toast.className = "toast error";
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>

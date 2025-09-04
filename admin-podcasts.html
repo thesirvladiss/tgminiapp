@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Управление подкастами - Админка</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .admin-header {
+        background: #422b23;
+        color: #fff;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .admin-header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .back-btn,
+      .logout-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-left: 12px;
+      }
+
+      .back-btn:hover,
+      .logout-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .admin-content {
+        padding: 40px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+
+      .add-podcast-btn {
+        background: #4caf50;
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .add-podcast-btn:hover {
+        background: #45a049;
+      }
+
+      .podcasts-table {
+        background: #fff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .table-header {
+        background: #f8f4f0;
+        padding: 20px;
+        border-bottom: 1px solid #e8d4c4;
+      }
+
+      .table-header h3 {
+        margin: 0;
+        color: #170f09;
+      }
+
+      .table-content {
+        padding: 0;
+      }
+
+      .podcast-item {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr 120px;
+        gap: 20px;
+        padding: 20px;
+        border-bottom: 1px solid #e8d4c4;
+        align-items: center;
+      }
+
+      .podcast-item:last-child {
+        border-bottom: none;
+      }
+
+      .podcast-item:hover {
+        background: #f8f4f0;
+      }
+
+      .podcast-title {
+        font-weight: 600;
+        color: #170f09;
+      }
+
+      .podcast-category {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .podcast-date {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .podcast-duration {
+        text-align: center;
+        color: #666;
+      }
+
+      .podcast-status {
+        text-align: center;
+      }
+
+      .status-published {
+        background: #4caf50;
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .status-draft {
+        background: #ff9800;
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .podcast-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .edit-btn,
+      .delete-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: background 0.2s;
+      }
+
+      .edit-btn {
+        background: #2196f3;
+        color: #fff;
+      }
+
+      .edit-btn:hover {
+        background: #1976d2;
+      }
+
+      .delete-btn {
+        background: #f44336;
+        color: #fff;
+      }
+
+      .delete-btn:hover {
+        background: #d32f2f;
+      }
+
+      /* Модальное окно для добавления/редактирования */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+      }
+
+      .modal {
+        background: #fff;
+        border-radius: 16px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .modal-header {
+        padding: 20px 20px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        color: #170f09;
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-content {
+        padding: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #170f09;
+        font-weight: 600;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e8d4c4;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.2s;
+        font-family: inherit;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #422b23;
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+
+      .file-upload {
+        border: 2px dashed #e8d4c4;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+
+      .file-upload:hover {
+        border-color: #422b23;
+      }
+
+      .file-upload input[type="file"] {
+        display: none;
+      }
+
+      .file-upload-text {
+        color: #666;
+        margin-bottom: 10px;
+      }
+
+      .file-upload-btn {
+        background: #422b23;
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 20px;
+      }
+
+      .cancel-btn {
+        background: #f1ded0;
+        color: #422b23;
+        border: 1px solid #422b23;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .save-btn {
+        background: #422b23;
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-header">
+      <h1>Управление подкастами</h1>
+      <div>
+        <button class="back-btn" onclick="goBack()">Назад</button>
+        <button class="logout-btn" onclick="logout()">Выход</button>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="page-header">
+        <h2>Магазин подкастов</h2>
+        <button class="add-podcast-btn" onclick="showAddPodcastModal()">
+          + Добавить подкаст
+        </button>
+      </div>
+
+      <div class="podcasts-table">
+        <div class="table-header">
+          <h3>Список подкастов</h3>
+        </div>
+        <div class="table-content" id="podcastsList">
+          <!-- Подкасты будут загружены динамически -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно для добавления/редактирования -->
+    <div class="modal-overlay" id="podcastModal" style="display: none">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="modalTitle">Добавить подкаст</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-content">
+          <form id="podcastForm">
+            <div class="form-group">
+              <label for="podcastTitle">Заголовок</label>
+              <input type="text" id="podcastTitle" name="title" required />
+            </div>
+
+            <div class="form-group">
+              <label for="podcastDescription">Описание</label>
+              <textarea
+                id="podcastDescription"
+                name="description"
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="podcastCategory">Категория/тема</label>
+              <select id="podcastCategory" name="category" required>
+                <option value="финансы">Финансы</option>
+                <option value="отношения">Отношения</option>
+                <option value="психология">Психология</option>
+                <option value="медитация">Медитация</option>
+                <option value="развитие">Развитие</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="podcastDate">Дата публикации</label>
+              <input type="date" id="podcastDate" name="date" required />
+            </div>
+
+            <div class="form-group">
+              <label for="podcastDuration">Длительность (минуты)</label>
+              <input
+                type="number"
+                id="podcastDuration"
+                name="duration"
+                min="1"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Preview файл (5 минут, MP3)</label>
+              <div
+                class="file-upload"
+                onclick="document.getElementById('previewFile').click()"
+              >
+                <div class="file-upload-text">Нажмите для выбора файла</div>
+                <input
+                  type="file"
+                  id="previewFile"
+                  name="previewFile"
+                  accept=".mp3"
+                  required
+                />
+                <div class="file-upload-btn">Выбрать файл</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Полный файл (MP3)</label>
+              <div
+                class="file-upload"
+                onclick="document.getElementById('fullFile').click()"
+              >
+                <div class="file-upload-text">Нажмите для выбора файла</div>
+                <input
+                  type="file"
+                  id="fullFile"
+                  name="fullFile"
+                  accept=".mp3"
+                  required
+                />
+                <div class="file-upload-btn">Выбрать файл</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Обложка (JPG/PNG)</label>
+              <div
+                class="file-upload"
+                onclick="document.getElementById('coverFile').click()"
+              >
+                <div class="file-upload-text">Нажмите для выбора файла</div>
+                <input
+                  type="file"
+                  id="coverFile"
+                  name="coverFile"
+                  accept=".jpg,.jpeg,.png"
+                  required
+                />
+                <div class="file-upload-btn">Выбрать файл</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="podcastStatus">Статус</label>
+              <select id="podcastStatus" name="status" required>
+                <option value="draft">Черновик</option>
+                <option value="published">Опубликован</option>
+              </select>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="cancel-btn" onclick="closeModal()">
+                Отмена
+              </button>
+              <button type="submit" class="save-btn">Сохранить</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Проверка авторизации
+      if (!localStorage.getItem("adminLoggedIn")) {
+        window.location.href = "admin-login.html";
+      }
+
+      // Данные подкастов (в реальном приложении загружались бы с сервера)
+      let podcasts = [
+        {
+          id: 1,
+          title: "Медитация ОШО",
+          description: "Глубокая медитация для духовного развития",
+          category: "медитация",
+          date: "2025-06-25",
+          duration: 47,
+          status: "published",
+        },
+        {
+          id: 2,
+          title: "Медитация женская",
+          description: "Специальная медитация для женщин",
+          category: "отношения",
+          date: "2025-09-14",
+          duration: 35,
+          status: "published",
+        },
+        {
+          id: 3,
+          title: "Медитация авторская",
+          description: "Уникальная авторская медитация",
+          category: "психология",
+          date: "2025-03-27",
+          duration: 63,
+          status: "published",
+        },
+        {
+          id: 4,
+          title: "Медитация мужская",
+          description: "Медитация для мужской энергии",
+          category: "финансы",
+          date: "2025-03-27",
+          duration: 38,
+          status: "draft",
+        },
+      ];
+
+      let editingPodcastId = null;
+
+      function goBack() {
+        window.location.href = "admin-dashboard.html";
+      }
+
+      function logout() {
+        localStorage.removeItem("adminLoggedIn");
+        window.location.href = "admin-login.html";
+      }
+
+      function loadPodcasts() {
+        const podcastsList = document.getElementById("podcastsList");
+        podcastsList.innerHTML = "";
+
+        podcasts.forEach((podcast) => {
+          const podcastItem = document.createElement("div");
+          podcastItem.className = "podcast-item";
+          podcastItem.innerHTML = `
+            <div class="podcast-title">${podcast.title}</div>
+            <div class="podcast-category">${podcast.category}</div>
+            <div class="podcast-date">${formatDate(podcast.date)}</div>
+            <div class="podcast-duration">${podcast.duration} мин</div>
+            <div class="podcast-status">
+              <span class="status-${podcast.status}">
+                ${podcast.status === "published" ? "Опубликован" : "Черновик"}
+              </span>
+            </div>
+            <div class="podcast-actions">
+              <button class="edit-btn" onclick="editPodcast(${
+                podcast.id
+              })">Изменить</button>
+              <button class="delete-btn" onclick="deletePodcast(${
+                podcast.id
+              })">Удалить</button>
+            </div>
+          `;
+          podcastsList.appendChild(podcastItem);
+        });
+      }
+
+      function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("ru-RU");
+      }
+
+      function showAddPodcastModal() {
+        editingPodcastId = null;
+        document.getElementById("modalTitle").textContent = "Добавить подкаст";
+        document.getElementById("podcastForm").reset();
+        document.getElementById("podcastModal").style.display = "flex";
+      }
+
+      function editPodcast(id) {
+        const podcast = podcasts.find((p) => p.id === id);
+        if (podcast) {
+          editingPodcastId = id;
+          document.getElementById("modalTitle").textContent =
+            "Изменить подкаст";
+          document.getElementById("podcastTitle").value = podcast.title;
+          document.getElementById("podcastDescription").value =
+            podcast.description;
+          document.getElementById("podcastCategory").value = podcast.category;
+          document.getElementById("podcastDate").value = podcast.date;
+          document.getElementById("podcastDuration").value = podcast.duration;
+          document.getElementById("podcastStatus").value = podcast.status;
+          document.getElementById("podcastModal").style.display = "flex";
+        }
+      }
+
+      function deletePodcast(id) {
+        if (confirm("Вы уверены, что хотите удалить этот подкаст?")) {
+          podcasts = podcasts.filter((p) => p.id !== id);
+          loadPodcasts();
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("podcastModal").style.display = "none";
+      }
+
+      // Обработчик формы
+      document
+        .getElementById("podcastForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(e.target);
+          const podcastData = {
+            title: formData.get("title"),
+            description: formData.get("description"),
+            category: formData.get("category"),
+            date: formData.get("date"),
+            duration: parseInt(formData.get("duration")),
+            status: formData.get("status"),
+          };
+
+          if (editingPodcastId) {
+            // Редактирование существующего подкаста
+            const index = podcasts.findIndex((p) => p.id === editingPodcastId);
+            if (index !== -1) {
+              podcasts[index] = { ...podcasts[index], ...podcastData };
+            }
+          } else {
+            // Добавление нового подкаста
+            const newId = Math.max(...podcasts.map((p) => p.id)) + 1;
+            podcasts.push({ id: newId, ...podcastData });
+          }
+
+          loadPodcasts();
+          closeModal();
+        });
+
+      // Загружаем подкасты при загрузке страницы
+      document.addEventListener("DOMContentLoaded", loadPodcasts);
+    </script>
+  </body>
+</html>

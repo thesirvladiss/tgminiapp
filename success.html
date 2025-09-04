@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Доступ открыт</title>
+    <meta name="color-scheme" content="dark light" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
+    <div class="wrapper">
+      <main class="app">
+        <div class="success-content">
+          <div class="success-icon">
+            <svg
+              width="80"
+              height="80"
+              viewBox="0 0 80 80"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="40" cy="40" r="40" fill="#4CAF50" />
+              <path
+                d="M32 40L36 44L48 32"
+                stroke="white"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+
+          <h1>Поздравляем!</h1>
+          <p class="success-message">Доступ открыт</p>
+
+          <div class="success-actions">
+            <button class="btn-primary" onclick="continueListening()">
+              Слушать дальше
+            </button>
+
+            <div id="subscription-action" style="display: none">
+              <button class="btn-secondary" onclick="goToPrivateChannel()">
+                Перейти в закрытый канал
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <div class="section-bg">
+        <img src="assets/img/background1.png" alt="" />
+      </div>
+    </div>
+
+    <script>
+      // Получаем параметры из URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const purchaseType = urlParams.get("type");
+      const podcastId = urlParams.get("id");
+
+      // Показываем соответствующую кнопку в зависимости от типа покупки
+      if (purchaseType === "subscription") {
+        document.getElementById("subscription-action").style.display = "block";
+      }
+
+      function continueListening() {
+        if (purchaseType === "subscription") {
+          // Если подписка, возвращаемся к списку подкастов
+          window.location.href = "podcasts.html";
+        } else if (podcastId) {
+          // Если купили конкретный подкаст, возвращаемся к нему
+          window.location.href = "podcasts-details.html?id=" + podcastId;
+        } else {
+          // По умолчанию возвращаемся к списку подкастов
+          window.location.href = "podcasts.html";
+        }
+      }
+
+      function goToPrivateChannel() {
+        // В реальном приложении здесь был бы переход в закрытый канал Telegram
+        // Сейчас показываем уведомление
+        showToast("Переход в закрытый канал...");
+
+        // Имитируем задержку
+        setTimeout(() => {
+          // Можно открыть ссылку на канал или использовать Telegram API
+          if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.openTelegramLink(
+              "https://t.me/your_private_channel"
+            );
+          } else {
+            window.open("https://t.me/your_private_channel", "_blank");
+          }
+        }, 1000);
+      }
+
+      function showToast(message) {
+        const toast = document.createElement("div");
+        toast.className = "toast success";
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>

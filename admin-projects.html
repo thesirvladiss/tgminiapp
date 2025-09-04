@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Управление проектами - Админка</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .admin-header {
+        background: #422b23;
+        color: #fff;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .admin-header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .back-btn,
+      .logout-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-left: 12px;
+      }
+
+      .back-btn:hover,
+      .logout-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .admin-content {
+        padding: 40px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+
+      .add-project-btn {
+        background: #4caf50;
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .add-project-btn:hover {
+        background: #45a049;
+      }
+
+      .projects-table {
+        background: #fff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .table-header {
+        background: #f8f4f0;
+        padding: 20px;
+        border-bottom: 1px solid #e8d4c4;
+      }
+
+      .table-header h3 {
+        margin: 0;
+        color: #170f09;
+      }
+
+      .table-content {
+        padding: 0;
+      }
+
+      .project-item {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr 100px;
+        gap: 20px;
+        padding: 20px;
+        border-bottom: 1px solid #e8d4c4;
+        align-items: center;
+      }
+
+      .project-item:last-child {
+        border-bottom: none;
+      }
+
+      .project-item:hover {
+        background: #f8f4f0;
+      }
+
+      .project-title {
+        font-weight: 600;
+        color: #170f09;
+      }
+
+      .project-url {
+        color: #666;
+        font-size: 14px;
+        word-break: break-all;
+        max-width: 300px;
+      }
+
+      .project-order {
+        text-align: center;
+        color: #666;
+      }
+
+      .project-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .edit-btn,
+      .delete-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: background 0.2s;
+      }
+
+      .edit-btn {
+        background: #2196f3;
+        color: #fff;
+      }
+
+      .edit-btn:hover {
+        background: #1976d2;
+      }
+
+      .delete-btn {
+        background: #f44336;
+        color: #fff;
+      }
+
+      .delete-btn:hover {
+        background: #d32f2f;
+      }
+
+      /* Модальное окно для добавления/редактирования */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+      }
+
+      .modal {
+        background: #fff;
+        border-radius: 16px;
+        max-width: 500px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .modal-header {
+        padding: 20px 20px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        color: #170f09;
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-content {
+        padding: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #170f09;
+        font-weight: 600;
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e8d4c4;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.2s;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #422b23;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 20px;
+      }
+
+      .cancel-btn {
+        background: #f1ded0;
+        color: #422b23;
+        border: 1px solid #422b23;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .save-btn {
+        background: #422b23;
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-header">
+      <h1>Управление проектами</h1>
+      <div>
+        <button class="back-btn" onclick="goBack()">Назад</button>
+        <button class="logout-btn" onclick="logout()">Выход</button>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="page-header">
+        <h2>Карточки проектов</h2>
+        <button class="add-project-btn" onclick="showAddProjectModal()">
+          + Добавить проект
+        </button>
+      </div>
+
+      <div class="projects-table">
+        <div class="table-header">
+          <h3>Список проектов (минимум 1, максимум 10)</h3>
+        </div>
+        <div class="table-content" id="projectsList">
+          <!-- Проекты будут загружены динамически -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно для добавления/редактирования -->
+    <div class="modal-overlay" id="projectModal" style="display: none">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="modalTitle">Добавить проект</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-content">
+          <form id="projectForm">
+            <div class="form-group">
+              <label for="projectTitle">Заголовок</label>
+              <input type="text" id="projectTitle" name="title" required />
+            </div>
+
+            <div class="form-group">
+              <label for="projectUrl">Ссылка</label>
+              <input type="url" id="projectUrl" name="url" required />
+            </div>
+
+            <div class="form-group">
+              <label for="projectOrder">Порядок отображения</label>
+              <input
+                type="number"
+                id="projectOrder"
+                name="order"
+                min="1"
+                max="10"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="projectType">Тип</label>
+              <select id="projectType" name="type" required>
+                <option value="podcasts">Подкасты (внутренний раздел)</option>
+                <option value="external">Внешняя ссылка</option>
+              </select>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="cancel-btn" onclick="closeModal()">
+                Отмена
+              </button>
+              <button type="submit" class="save-btn">Сохранить</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Проверка авторизации
+      if (!localStorage.getItem("adminLoggedIn")) {
+        window.location.href = "admin-login.html";
+      }
+
+      // Данные проектов (в реальном приложении загружались бы с сервера)
+      let projects = [
+        {
+          id: 1,
+          title: "Магазин подкастов",
+          url: "podcasts.html",
+          order: 1,
+          type: "podcasts",
+        },
+        {
+          id: 2,
+          title: "Закрытый канал",
+          url: "https://t.me/private_channel",
+          order: 2,
+          type: "external",
+        },
+        {
+          id: 3,
+          title: "Пересказы книг",
+          url: "https://example.com/books",
+          order: 3,
+          type: "external",
+        },
+        {
+          id: 4,
+          title: "Курс по финансам",
+          url: "https://example.com/finance",
+          order: 4,
+          type: "external",
+        },
+        {
+          id: 5,
+          title: "Пост и молитва",
+          url: "https://example.com/prayer",
+          order: 5,
+          type: "external",
+        },
+        {
+          id: 6,
+          title: "Благотворительность",
+          url: "https://example.com/charity",
+          order: 6,
+          type: "external",
+        },
+      ];
+
+      let editingProjectId = null;
+
+      function goBack() {
+        window.location.href = "admin-dashboard.html";
+      }
+
+      function logout() {
+        localStorage.removeItem("adminLoggedIn");
+        window.location.href = "admin-login.html";
+      }
+
+      function loadProjects() {
+        const projectsList = document.getElementById("projectsList");
+        projectsList.innerHTML = "";
+
+        projects.forEach((project) => {
+          const projectItem = document.createElement("div");
+          projectItem.className = "project-item";
+          projectItem.innerHTML = `
+            <div class="project-title">${project.title}</div>
+            <div class="project-url">${project.url}</div>
+            <div class="project-order">${project.order}</div>
+            <div class="project-actions">
+              <button class="edit-btn" onclick="editProject(${project.id})">Изменить</button>
+              <button class="delete-btn" onclick="deleteProject(${project.id})">Удалить</button>
+            </div>
+          `;
+          projectsList.appendChild(projectItem);
+        });
+      }
+
+      function showAddProjectModal() {
+        editingProjectId = null;
+        document.getElementById("modalTitle").textContent = "Добавить проект";
+        document.getElementById("projectForm").reset();
+        document.getElementById("projectModal").style.display = "flex";
+      }
+
+      function editProject(id) {
+        const project = projects.find((p) => p.id === id);
+        if (project) {
+          editingProjectId = id;
+          document.getElementById("modalTitle").textContent = "Изменить проект";
+          document.getElementById("projectTitle").value = project.title;
+          document.getElementById("projectUrl").value = project.url;
+          document.getElementById("projectOrder").value = project.order;
+          document.getElementById("projectType").value = project.type;
+          document.getElementById("projectModal").style.display = "flex";
+        }
+      }
+
+      function deleteProject(id) {
+        if (projects.length <= 1) {
+          alert("Нельзя удалить последний проект!");
+          return;
+        }
+
+        if (confirm("Вы уверены, что хотите удалить этот проект?")) {
+          projects = projects.filter((p) => p.id !== id);
+          loadProjects();
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("projectModal").style.display = "none";
+      }
+
+      // Обработчик формы
+      document
+        .getElementById("projectForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(e.target);
+          const projectData = {
+            title: formData.get("title"),
+            url: formData.get("url"),
+            order: parseInt(formData.get("order")),
+            type: formData.get("type"),
+          };
+
+          if (editingProjectId) {
+            // Редактирование существующего проекта
+            const index = projects.findIndex((p) => p.id === editingProjectId);
+            if (index !== -1) {
+              projects[index] = { ...projects[index], ...projectData };
+            }
+          } else {
+            // Добавление нового проекта
+            if (projects.length >= 10) {
+              alert("Достигнут максимум проектов (10)");
+              return;
+            }
+
+            const newId = Math.max(...projects.map((p) => p.id)) + 1;
+            projects.push({ id: newId, ...projectData });
+          }
+
+          loadProjects();
+          closeModal();
+        });
+
+      // Загружаем проекты при загрузке страницы
+      document.addEventListener("DOMContentLoaded", loadProjects);
+    </script>
+  </body>
+</html>

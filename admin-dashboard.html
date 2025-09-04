@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Админка - Проекты Петра Лупенко</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .admin-header {
+        background: #422b23;
+        color: #fff;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .admin-header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .logout-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .logout-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .admin-content {
+        padding: 40px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .welcome-section {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .welcome-section h2 {
+        color: #170f09;
+        margin-bottom: 16px;
+      }
+
+      .welcome-section p {
+        color: #666;
+        font-size: 18px;
+      }
+
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+      }
+
+      .action-card {
+        background: #fff;
+        border: 2px solid #e8d4c4;
+        border-radius: 16px;
+        padding: 24px;
+        text-align: center;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+
+      .action-card:hover {
+        border-color: #422b23;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+
+      .action-card h3 {
+        color: #170f09;
+        margin-bottom: 12px;
+      }
+
+      .action-card p {
+        color: #666;
+        margin-bottom: 20px;
+      }
+
+      .action-btn {
+        background: #422b23;
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .action-btn:hover {
+        background: #5a3a2f;
+      }
+
+      .stats-widget {
+        background: #f8f4f0;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 40px;
+      }
+
+      .stats-widget h3 {
+        color: #170f09;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: 20px;
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e8d4c4;
+      }
+
+      .stat-number {
+        font-size: 32px;
+        font-weight: 700;
+        color: #422b23;
+        margin-bottom: 8px;
+      }
+
+      .stat-label {
+        color: #666;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-header">
+      <h1>Админка - Проекты Петра Лупенко</h1>
+      <button class="logout-btn" onclick="logout()">Выход</button>
+    </div>
+
+    <div class="admin-content">
+      <div class="welcome-section">
+        <h2>Добро пожаловать в админку!</h2>
+        <p>Управляйте контентом Mini App и отслеживайте статистику</p>
+      </div>
+
+      <div class="quick-actions">
+        <div class="action-card" onclick="goToProjects()">
+          <h3>Управление проектами</h3>
+          <p>Настройка карточек на главном экране Mini App</p>
+          <button class="action-btn">Управлять</button>
+        </div>
+
+        <div class="action-card" onclick="goToPodcasts()">
+          <h3>Магазин подкастов</h3>
+          <p>Добавление, редактирование и управление подкастами</p>
+          <button class="action-btn">Управлять</button>
+        </div>
+
+        <div class="action-card" onclick="goToUsers()">
+          <h3>Пользователи</h3>
+          <p>Просмотр пользователей и их покупок</p>
+          <button class="action-btn">Просмотреть</button>
+        </div>
+      </div>
+
+      <div class="stats-widget">
+        <h3>Статистика</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-number" id="publishedPodcasts">12</div>
+            <div class="stat-label">Опубликовано подкастов</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="totalPurchases">47</div>
+            <div class="stat-label">Всего покупок</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="activeUsers">156</div>
+            <div class="stat-label">Активных пользователей</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="revenue">12,400 ₽</div>
+            <div class="stat-label">Общая выручка</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Проверка авторизации
+      if (!localStorage.getItem("adminLoggedIn")) {
+        window.location.href = "admin-login.html";
+      }
+
+      function logout() {
+        localStorage.removeItem("adminLoggedIn");
+        window.location.href = "admin-login.html";
+      }
+
+      function goToProjects() {
+        window.location.href = "admin-projects.html";
+      }
+
+      function goToPodcasts() {
+        window.location.href = "admin-podcasts.html";
+      }
+
+      function goToUsers() {
+        window.location.href = "admin-users.html";
+      }
+
+      // Загрузка статистики (в реальном приложении здесь был бы запрос к серверу)
+      function loadStats() {
+        // Имитация загрузки данных
+        document.getElementById("publishedPodcasts").textContent = "12";
+        document.getElementById("totalPurchases").textContent = "47";
+        document.getElementById("activeUsers").textContent = "156";
+        document.getElementById("revenue").textContent = "12,400 ₽";
+      }
+
+      // Загружаем статистику при загрузке страницы
+      document.addEventListener("DOMContentLoaded", loadStats);
+    </script>
+  </body>
+</html>

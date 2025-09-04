@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Пользователи - Админка</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .admin-header {
+        background: #422b23;
+        color: #fff;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .admin-header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .back-btn,
+      .logout-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-left: 12px;
+      }
+
+      .back-btn:hover,
+      .logout-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .admin-content {
+        padding: 40px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .page-header {
+        margin-bottom: 30px;
+      }
+
+      .users-table {
+        background: #fff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .table-header {
+        background: #f8f4f0;
+        padding: 20px;
+        border-bottom: 1px solid #e8d4c4;
+      }
+
+      .table-header h3 {
+        margin: 0;
+        color: #170f09;
+      }
+
+      .table-content {
+        padding: 0;
+      }
+
+      .user-item {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+        gap: 20px;
+        padding: 20px;
+        border-bottom: 1px solid #e8d4c4;
+        align-items: center;
+      }
+
+      .user-item:last-child {
+        border-bottom: none;
+      }
+
+      .user-item:hover {
+        background: #f8f4f0;
+      }
+
+      .user-id {
+        font-weight: 600;
+        color: #170f09;
+        font-family: monospace;
+      }
+
+      .user-purchases {
+        text-align: center;
+        color: #666;
+      }
+
+      .user-subscription {
+        text-align: center;
+      }
+
+      .subscription-active {
+        background: #4caf50;
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .subscription-inactive {
+        background: #f44336;
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .user-free-podcast {
+        color: #666;
+        font-size: 14px;
+        word-break: break-all;
+        max-width: 200px;
+      }
+
+      .stats-summary {
+        background: #f8f4f0;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 30px;
+      }
+
+      .stats-summary h3 {
+        color: #170f09;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: 20px;
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e8d4c4;
+      }
+
+      .stat-number {
+        font-size: 24px;
+        font-weight: 700;
+        color: #422b23;
+        margin-bottom: 8px;
+      }
+
+      .stat-label {
+        color: #666;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-header">
+      <h1>Пользователи</h1>
+      <div>
+        <button class="back-btn" onclick="goBack()">Назад</button>
+        <button class="logout-btn" onclick="logout()">Выход</button>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="page-header">
+        <h2>Информация о пользователях</h2>
+      </div>
+
+      <div class="stats-summary">
+        <h3>Общая статистика</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-number" id="totalUsers">0</div>
+            <div class="stat-label">Всего пользователей</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="activeSubscriptions">0</div>
+            <div class="stat-label">Активных подписок</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="totalPurchases">0</div>
+            <div class="stat-label">Всего покупок</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="totalRevenue">0 ₽</div>
+            <div class="stat-label">Общая выручка</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="users-table">
+        <div class="table-header">
+          <h3>Список пользователей</h3>
+        </div>
+        <div class="table-content" id="usersList">
+          <!-- Пользователи будут загружены динамически -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Проверка авторизации
+      if (!localStorage.getItem("adminLoggedIn")) {
+        window.location.href = "admin-login.html";
+      }
+
+      // Данные пользователей (в реальном приложении загружались бы с сервера)
+      let users = [
+        {
+          id: 123456789,
+          purchases: 3,
+          hasSubscription: true,
+          freePodcast: "Медитация ОШО",
+        },
+        {
+          id: 987654321,
+          purchases: 1,
+          hasSubscription: false,
+          freePodcast: "Медитация женская",
+        },
+        {
+          id: 456789123,
+          purchases: 0,
+          hasSubscription: false,
+          freePodcast: null,
+        },
+        {
+          id: 789123456,
+          purchases: 5,
+          hasSubscription: true,
+          freePodcast: "Медитация авторская",
+        },
+        {
+          id: 321654987,
+          purchases: 2,
+          hasSubscription: false,
+          freePodcast: "Медитация мужская",
+        },
+      ];
+
+      function goBack() {
+        window.location.href = "admin-dashboard.html";
+      }
+
+      function logout() {
+        localStorage.removeItem("adminLoggedIn");
+        window.location.href = "admin-login.html";
+      }
+
+      function loadUsers() {
+        const usersList = document.getElementById("usersList");
+        usersList.innerHTML = "";
+
+        users.forEach((user) => {
+          const userItem = document.createElement("div");
+          userItem.className = "user-item";
+          userItem.innerHTML = `
+            <div class="user-id">${user.id}</div>
+            <div class="user-purchases">${user.purchases}</div>
+            <div class="user-subscription">
+              <span class="subscription-${
+                user.hasSubscription ? "active" : "inactive"
+              }">
+                ${user.hasSubscription ? "Активна" : "Неактивна"}
+              </span>
+            </div>
+            <div class="user-free-podcast">
+              ${user.freePodcast || "Не использован"}
+            </div>
+          `;
+          usersList.appendChild(userItem);
+        });
+
+        updateStats();
+      }
+
+      function updateStats() {
+        const totalUsers = users.length;
+        const activeSubscriptions = users.filter(
+          (u) => u.hasSubscription
+        ).length;
+        const totalPurchases = users.reduce((sum, u) => sum + u.purchases, 0);
+        const totalRevenue = totalPurchases * 200 + activeSubscriptions * 1500;
+
+        document.getElementById("totalUsers").textContent = totalUsers;
+        document.getElementById("activeSubscriptions").textContent =
+          activeSubscriptions;
+        document.getElementById("totalPurchases").textContent = totalPurchases;
+        document.getElementById("totalRevenue").textContent =
+          totalRevenue.toLocaleString() + " ₽";
+      }
+
+      // Загружаем пользователей при загрузке страницы
+      document.addEventListener("DOMContentLoaded", loadUsers);
+    </script>
+  </body>
+</html>
