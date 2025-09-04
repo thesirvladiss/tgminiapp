@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Поздравляем!</title>
+    <meta name="color-scheme" content="dark light" />
+    <link rel="stylesheet" href="{{ url_for('static', path='front.css') }}" />
+    <style></style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="info-wrapper">
+        <div class="info-w-img">
+          <img src="{{ url_for('static', path='assets/img/succes.svg') }}" alt="" />
+        </div>
+        <h2>Поздравляем! <span>Доступ открыт</span></h2>
+
+        <a class="btn-orange" href="/podcasts">слушать дальше</a>
+      </div>
+
+      <div class="section-bg">
+        <img src="{{ url_for('static', path='assets/img/background4.webp') }}" alt="" />
+      </div>
+    </div>
+  </body>
+</html>

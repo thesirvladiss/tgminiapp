@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy>=2.0
+Jinja2
+python-multipart
+passlib[bcrypt]
+python-dotenv
+mutagen
+aiogram>=3.7
+

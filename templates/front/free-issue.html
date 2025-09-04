@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Бесплатный выпуск</title>
+    <meta name="color-scheme" content="dark light" />
+    <link rel="stylesheet" href="{{ url_for('static', path='front.css') }}" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <main class="app free-issue-app">
+        <div class="podcasts-img">
+          <img src="{{ url_for('static', path='assets/img/podcastsImg2.webp') }}" alt="" />
+        </div>
+
+        <div class="free-issue-cnt">
+          <div class="free-issue-titles">
+            <i class="icon icon-interface"></i>
+            <h2>Бесплатный выпуск вы уже получили</h2>
+            <p>Чтобы слушать этот подкаст — купите выпуск или подписку</p>
+          </div>
+
+          <div class="free-issue-items">
+            <div class="free-issue-item">
+              <i class="icon icon-freeIcon"> </i>
+              <div class="free-item-texts">
+                <p>Бесплатно</p>
+                <span>5 мин</span>
+              </div>
+              <a class="btn-white" href="/podcasts/{{ podcast.id }}?preview=1">слушать</a>
+            </div>
+
+            <div class="free-issue-item">
+              <i class="icon icon-media"> </i>
+              <div class="free-item-texts">
+                <p>выпуск</p>
+                <span>200 руб.</span>
+              </div>
+              <form method="post" action="/checkout" style="display:inline">
+                <input type="hidden" name="tariff" value="single" />
+                <input type="hidden" name="podcast_id" value="{{ podcast.id }}" />
+                <button class="btn-white" type="submit">Купить</button>
+              </form>
+            </div>
+
+            <div class="free-issue-item">
+              <i class="icon icon-user"> </i>
+              <div class="free-item-texts">
+                <p>Подписка</p>
+                <span>1 500 руб.</span>
+              </div>
+              <form method="post" action="/checkout" style="display:inline">
+                <input type="hidden" name="tariff" value="subscription" />
+                <button class="btn-white" type="submit">Купить</button>
+              </form>
+            </div>
+
+
+          </div>
+
+
+        </div>
+      </main>
+
+      <div class="section-bg">
+        <img src="{{ url_for('static', path='assets/img/background3.webp') }}" alt="" />
+      </div>
+    </div>
+    <script src="{{ url_for('static', path='assets/js/main.js') }}"></script>
+  </body>
+</html>

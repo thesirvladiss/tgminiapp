@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Подкасты</title>
+    <meta name="color-scheme" content="dark light" />
+    <link rel="stylesheet" href="{{ url_for('static', path='front.css') }}" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <main class="app">
+        <header>
+          <h1>Подкасты</h1>
+        </header>
+
+        <div class="podcasts-items">
+          {% for p in podcasts %}
+          <div class="podcast-item">
+            <div class="podcast-titles">
+              <p>{{ (p.published_at.strftime('%d.%m.%Y') if p.published_at else '') }}</p>
+              <h2>{{ p.title }}</h2>
+            </div>
+            <div class="podcast-body">
+              <div class="podcast-info">
+                <div class="podcast-play">
+                  <i class="icon icon-play"></i>
+                  <span>{{ (p.duration_seconds // 60) or 0 }} мин</span>
+                </div>
+                <p>Категория: {{ p.category or '—' }}</p>
+              </div>
+              <a href="/podcasts/{{ p.id }}" class="btn-orange">Слушать</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </main>
+      <div class="section-bg">
+        <img src="{{ url_for('static', path='assets/img/background2.webp') }}" alt="" />
+      </div>
+    </div>
+  <script src="{{ url_for('static', path='assets/js/main.js') }}"></script>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Проекты Петра Лупенко</title>
+    <meta name="color-scheme" content="dark light" />
+    <link rel="stylesheet" href="{{ url_for('static', path='front.css') }}" />
+    <style></style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <main class="app">
+        <header>
+          <h1>
+            Проекты
+            <span class="sub">Петра Лупенко</span>
+          </h1>
+
+          <div class="avatar" aria-label="Аватар">
+            <img src="{{ url_for('static', path='assets/img/avatar.png') }}" alt="avatar" />
+          </div>
+        </header>
+
+        <nav class="stack" aria-label="Список проектов">
+          {% for card in cards %}
+          <a
+            class="tile{% if loop.index <= 2 %} is-large{% endif %}"
+            href="{{ card.url }}"
+            role="button"
+            aria-label="{{ card.title }}"
+            >{{ card.title }}</a
+          >
+          {% endfor %}
+        </nav>
+
+      </main>
+
+      <div class="section-bg">
+        <img src="{{ url_for('static', path='assets/img/background1.png') }}" alt="" />
+      </div>
+    </div>
+  </body>
+</html>

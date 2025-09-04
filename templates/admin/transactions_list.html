@@ -1,0 +1,29 @@
+{% extends "admin/base.html" %}
+{% block content %}
+  <h2>Транзакции</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Пользователь</th>
+        <th>Тип</th>
+        <th>Подкаст</th>
+        <th>Статус</th>
+        <th>Дата</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it in items %}
+      <tr>
+        <td>{{ it.id }}</td>
+        <td>{{ it.user.telegram_id if it.user else '' }}</td>
+        <td>{{ it.type }}</td>
+        <td>{{ it.podcast.title if it.podcast else '' }}</td>
+        <td>{{ it.status }}</td>
+        <td>{{ it.created_at.strftime('%Y-%m-%d %H:%M') if it.created_at else '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+

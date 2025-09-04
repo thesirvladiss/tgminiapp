@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Вход в админку</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 0; color: #222 }
+      .box { max-width: 420px; margin: 12vh auto; border: 1px solid #ddd; border-radius: 8px; padding: 16px }
+      input[type="text"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #bbb; border-radius: 4px; margin-bottom: 10px }
+      button { padding: 10px 14px; background:#222; color:#fff; border:0; border-radius:4px; cursor:pointer }
+      .error { color: #b00020; margin-bottom: 12px }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h2>Вход</h2>
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+      <form action="/admin/login" method="post">
+        <label>Логин</label>
+        <input type="text" name="username" required />
+        <label>Пароль</label>
+        <input type="password" name="password" required />
+        <button type="submit">Войти</button>
+      </form>
+    </div>
+  </body>
+  </html>
+

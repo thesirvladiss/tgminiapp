@@ -1,0 +1,11 @@
+{% extends "admin/base.html" %}
+{% block content %}
+  <h2>Дашборд</h2>
+  <div class="toolbar">
+    <a class="btn" href="/admin/projects">Управление проектами</a>
+    <a class="btn" href="/admin/podcasts">Магазин подкастов</a>
+  </div>
+  <p class="muted">Опубликовано подкастов: <strong>{{ stats.published }}</strong></p>
+  <p class="muted">Транзакций: <strong>{{ stats.transactions }}</strong></p>
+{% endblock %}
+

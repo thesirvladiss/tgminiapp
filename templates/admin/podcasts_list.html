@@ -1,0 +1,41 @@
+{% extends "admin/base.html" %}
+{% block content %}
+  <h2>Подкасты</h2>
+  <div class="toolbar">
+    <a class="btn" href="/admin/podcasts/create">Добавить</a>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Заголовок</th>
+        <th>Категория</th>
+        <th>Дата</th>
+        <th>Длительность</th>
+        <th>Опубл.</th>
+        <th>Бесплатн.</th>
+        <th>Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it in items %}
+      <tr>
+        <td>{{ it.id }}</td>
+        <td>{{ it.title }}</td>
+        <td>{{ it.category or '' }}</td>
+        <td>{{ it.published_at.strftime('%Y-%m-%d') if it.published_at else '' }}</td>
+        <td>{{ (it.duration_seconds // 60) or 0 }} мин</td>
+        <td>{{ '✓' if it.is_published else '' }}</td>
+        <td>{{ '✓' if it.is_free else '' }}</td>
+        <td class="actions">
+          <a href="/admin/podcasts/{{ it.id }}/edit">Редактировать</a>
+          <form action="/admin/podcasts/{{ it.id }}/delete" method="post" style="display:inline" onsubmit="return confirm('Удалить?')">
+            <button type="submit">Удалить</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+
