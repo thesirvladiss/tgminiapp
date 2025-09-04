@@ -22,13 +22,19 @@ def telegram_auth(
     ua = request.headers.get("user-agent", "")
     ref = request.headers.get("referer", "")
     origin = request.headers.get("origin", "")
+    # Dump all headers for debug
+    try:
+        headers_dump = {k.lower(): v for k, v in request.headers.items()}
+    except Exception:
+        headers_dump = {}
     logger.info(
-        "telegram_auth called: ua=%s ref=%s origin=%s init_data_len=%s snippet=%s",
+        "telegram_auth called: ua=%s ref=%s origin=%s init_data_len=%s snippet=%s headers=%s",
         ua,
         ref,
         origin,
         len(init_data or ""),
         (init_data or "")[:200],
+        headers_dump,
     )
 
     parsed = validate_init_data(init_data, bot_token=settings.bot_token)
