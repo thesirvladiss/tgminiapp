@@ -161,7 +161,7 @@ def create_app() -> FastAPI:
                 request.headers.get("referer", ""),
                 request.headers.get("origin", ""),
             )
-            # return templates.TemplateResponse("front/loader.html", {"request": request})
+            return templates.TemplateResponse("front/loader.html", {"request": request})
         return None
 
     @app.get("/", response_class=HTMLResponse)
@@ -172,7 +172,7 @@ def create_app() -> FastAPI:
                 getattr(request.client, "host", "-"),
                 request.headers.get("user-agent", ""),
             )
-            # return templates.TemplateResponse("front/loader.html", {"request": request})
+            return templates.TemplateResponse("front/loader.html", {"request": request})
         cards = (
             db.query(models.ProjectCard)
             .order_by(models.ProjectCard.order.asc(), models.ProjectCard.id.asc())
@@ -190,7 +190,7 @@ def create_app() -> FastAPI:
                 getattr(request.client, "host", "-"),
                 request.headers.get("user-agent", ""),
             )
-            # return templates.TemplateResponse("front/loader.html", {"request": request})
+            return templates.TemplateResponse("front/loader.html", {"request": request})
         podcasts = (
             db.query(models.Podcast)
             .filter(models.Podcast.is_published.is_(True))
@@ -214,7 +214,7 @@ def create_app() -> FastAPI:
                 getattr(request.client, "host", "-"),
                 request.headers.get("user-agent", ""),
             )
-            # return templates.TemplateResponse("front/loader.html", {"request": request})
+            return templates.TemplateResponse("front/loader.html", {"request": request})
         podcast = db.get(models.Podcast, podcast_id)
         if not podcast:
             return RedirectResponse("/podcasts")
@@ -254,7 +254,7 @@ def create_app() -> FastAPI:
                 getattr(request.client, "host", "-"),
                 request.headers.get("user-agent", ""),
             )
-            # return templates.TemplateResponse("front/loader.html", {"request": request})
+            return templates.TemplateResponse("front/loader.html", {"request": request})
         podcast = db.get(models.Podcast, podcast_id)
         if not podcast:
             return RedirectResponse("/podcasts")

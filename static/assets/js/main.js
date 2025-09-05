@@ -2,8 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const audio = document.querySelector("[data-audio]");
   const playBtn = document.querySelector("[data-play-toggle]");
   const range = document.querySelector("[data-seek]");
-    const cur   = document.querySelector("[data-current-time]");
-  const left  = document.querySelector("[data-remaining-time]");
+  const cur = document.querySelector("[data-current-time]");
+  const left = document.querySelector("[data-remaining-time]");
 
   if (!audio || !playBtn || !range) return;
 
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const dur = isFinite(audio.duration) ? audio.duration : 0;
     const ct = isFinite(audio.currentTime) ? audio.currentTime : 0;
 
-   
+
     cur.textContent = formatTime(ct);
     left.textContent = "-" + formatTime(Math.max(0, dur - ct));
 
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
   audio.addEventListener("timeupdate", paint);
   audio.addEventListener("seeked", paint);
   audio.addEventListener("ended", () => {
- 
+
     paint();
   });
 
@@ -87,28 +87,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   function seekByPointerEvent(e) {
-  if (!isFinite(audio.duration) || audio.duration <= 0) return;
+    if (!isFinite(audio.duration) || audio.duration <= 0) return;
 
-  const rect = range.getBoundingClientRect();
-  const x = (e.clientX ?? (e.touches && e.touches[0]?.clientX)) - rect.left;
-  const clampedX = Math.max(0, Math.min(rect.width, x));
-  const pct = clampedX / rect.width;
-  const newTime = pct * audio.duration;
+    const rect = range.getBoundingClientRect();
+    const x = (e.clientX ?? (e.touches && e.touches[0]?.clientX)) - rect.left;
+    const clampedX = Math.max(0, Math.min(rect.width, x));
+    const pct = clampedX / rect.width;
+    const newTime = pct * audio.duration;
 
-  audio.currentTime = newTime;
+    audio.currentTime = newTime;
 
 
-  paint();
-}
+    paint();
+  }
 
-range.addEventListener("click", (e) => {
-  if (e.detail === 0) return; 
-  seekByPointerEvent(e);
-});
+  range.addEventListener("click", (e) => {
+    if (e.detail === 0) return;
+    seekByPointerEvent(e);
+  });
 
-range.addEventListener("pointerdown", (e) => {
-  seekByPointerEvent(e);
-});
+  range.addEventListener("pointerdown", (e) => {
+    seekByPointerEvent(e);
+  });
 });
 
 const items = document.querySelectorAll('.subscription-item');
@@ -131,26 +131,66 @@ try {
     if (!sessionStorage.getItem(sentKey)) {
       const body = new URLSearchParams({ init_data: initData }).toString();
       // client debug logger
-      fetch('/api/debug/log', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({
-        hint: 'before_auth', hasWebApp: true, hasInitData: !!initData, initDataLen: (initData||'').length,
-        ua: navigator.userAgent, ref: document.referrer
-      }) }).catch(()=>{});
+      fetch('/api/debug/log', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+          hint: 'before_auth', hasWebApp: true, hasInitData: !!initData, initDataLen: (initData || '').length,
+          ua: navigator.userAgent, ref: document.referrer
+        })
+      }).catch(() => { });
       fetch('/api/telegram/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body
       }).then(r => r.json()).then((j) => {
-        fetch('/api/debug/log', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({
-          hint: 'after_auth', resp: j
-        }) }).catch(()=>{});
+        fetch('/api/debug/log', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+            hint: 'after_auth', resp: j
+          })
+        }).catch(() => { });
         try {
           if (j && j.ok) {
             // refresh to let server-side routes see session telegram_id
             window.location.replace('/');
           }
-        } catch (e) {}
+        } catch (e) { }
       }).catch((e) => { console.log('tg auth err', e); });
       sessionStorage.setItem(sentKey, '1');
     }
   }
-} catch (e) {}
+} catch (e) { }
+
+// --- External link handling for Telegram Mini App ---
+// Open external http(s) links via Telegram API to ensure navigation works inside the Mini App
+document.addEventListener("click", (event) => {
+  const anchor = event.target && event.target.closest ? event.target.closest('a[href]') : null;
+  if (!anchor) return;
+  const href = anchor.getAttribute('href') || '';
+  if (!href) return;
+  if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) return;
+
+  // Only intercept absolute http(s) links
+  const isHttp = /^https?:\/\//i.test(href);
+  if (!isHttp) return;
+
+  let url;
+  try { url = new URL(href, window.location.href); } catch (_) { return; }
+
+  // Let same-origin links behave normally
+  if (url.origin === window.location.origin) return;
+
+  // In Mini App use Telegram API; fallback to window.open elsewhere
+  try {
+    if (window.Telegram && window.Telegram.WebApp) {
+      event.preventDefault();
+      if (/^https?:\/\/t\.me\//i.test(url.href)) {
+        window.Telegram.WebApp.openTelegramLink(url.href);
+      } else {
+        window.Telegram.WebApp.openLink(url.href);
+      }
+    }
+  } catch (_) {
+    // As a graceful fallback
+    event.preventDefault();
+    window.open(url.href, '_blank', 'noopener');
+  }
+});
