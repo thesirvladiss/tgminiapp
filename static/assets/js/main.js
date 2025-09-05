@@ -158,39 +158,3 @@ try {
     }
   }
 } catch (e) { }
-
-// --- External link handling for Telegram Mini App ---
-// Open external http(s) links via Telegram API to ensure navigation works inside the Mini App
-document.addEventListener("click", (event) => {
-  const anchor = event.target && event.target.closest ? event.target.closest('a[href]') : null;
-  if (!anchor) return;
-  const href = anchor.getAttribute('href') || '';
-  if (!href) return;
-  if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) return;
-
-  // Only intercept absolute http(s) links
-  const isHttp = /^https?:\/\//i.test(href);
-  if (!isHttp) return;
-
-  let url;
-  try { url = new URL(href, window.location.href); } catch (_) { return; }
-
-  // Let same-origin links behave normally
-  if (url.origin === window.location.origin) return;
-
-  // In Mini App use Telegram API; fallback to window.open elsewhere
-  try {
-    if (window.Telegram && window.Telegram.WebApp) {
-      event.preventDefault();
-      if (/^https?:\/\/t\.me\//i.test(url.href)) {
-        window.Telegram.WebApp.openTelegramLink(url.href);
-      } else {
-        window.Telegram.WebApp.openLink(url.href);
-      }
-    }
-  } catch (_) {
-    // As a graceful fallback
-    event.preventDefault();
-    window.open(url.href, '_blank', 'noopener');
-  }
-});
