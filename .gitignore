@@ -12,7 +12,8 @@ build/
 
 # Virtual env
 .venv/
-
+venv/
+data/
 # Environment
 .env
 .env.*
