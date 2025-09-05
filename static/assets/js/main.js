@@ -158,3 +158,31 @@ try {
     }
   }
 } catch (e) { }
+
+// External links in Telegram Mini App: open via WebApp API
+document.addEventListener("click", (event) => {
+  const anchor = event.target && event.target.closest ? event.target.closest('a[href]') : null;
+  if (!anchor) return;
+  const href = anchor.getAttribute('href') || '';
+  if (!href) return;
+  if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) return;
+
+  // Only absolute http(s) links
+  const isHttp = /^https?:\/\//i.test(href);
+  if (!isHttp) return;
+
+  let url;
+  try { url = new URL(href, window.location.href); } catch (_) { return; }
+
+  // Same-origin -> let default navigation
+  if (url.origin === window.location.origin) return;
+
+  if (window.Telegram && window.Telegram.WebApp) {
+    event.preventDefault();
+    if (/^https?:\/\/t\.me\//i.test(url.href)) {
+      window.Telegram.WebApp.openTelegramLink(url.href);
+    } else {
+      window.Telegram.WebApp.openLink(url.href, { try_instant_view: true });
+    }
+  }
+});

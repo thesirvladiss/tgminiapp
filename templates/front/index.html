@@ -22,7 +22,10 @@
           </h1>
 
           <div class="avatar" aria-label="Аватар">
-            <img src="{{ url_for('static', path='assets/img/avatar.png') }}" alt="avatar" />
+            <img
+              src="{{ url_for('static', path='assets/img/avatar.png') }}"
+              alt="avatar"
+            />
           </div>
         </header>
 
@@ -37,12 +40,15 @@
           >
           {% endfor %}
         </nav>
-
       </main>
 
       <div class="section-bg">
-        <img src="{{ url_for('static', path='assets/img/background1.png') }}" alt="" />
+        <img
+          src="{{ url_for('static', path='assets/img/background1.png') }}"
+          alt=""
+        />
       </div>
     </div>
+    <script src="{{ url_for('static', path='assets/js/main.js') }}"></script>
   </body>
 </html>
