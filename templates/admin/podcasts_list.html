@@ -1,9 +1,9 @@
-{% extends "admin/base.html" %}
-{% block content %}
-  <h2>Подкасты</h2>
-  <div class="toolbar">
-    <a class="btn" href="/admin/podcasts/create">Добавить</a>
-  </div>
+{% extends "admin/base.html" %} {% block content %}
+<div class="page-title">Подкасты</div>
+<div class="toolbar">
+  <a class="btn" href="/admin/podcasts/create">Добавить</a>
+</div>
+<div class="card">
   <table>
     <thead>
       <tr>
@@ -23,19 +23,34 @@
         <td>{{ it.id }}</td>
         <td>{{ it.title }}</td>
         <td>{{ it.category or '' }}</td>
-        <td>{{ it.published_at.strftime('%Y-%m-%d') if it.published_at else '' }}</td>
+        <td>
+          {{ it.published_at.strftime('%Y-%m-%d') if it.published_at else '' }}
+        </td>
         <td>{{ (it.duration_seconds // 60) or 0 }} мин</td>
-        <td>{{ '✓' if it.is_published else '' }}</td>
-        <td>{{ '✓' if it.is_free else '' }}</td>
+        <td>
+          {% if it.is_published %}<span class="badge success">✓</span>{% else
+          %}<span class="badge muted">—</span>{% endif %}
+        </td>
+        <td>
+          {% if it.is_free %}<span class="badge warning">✓</span>{% else %}<span
+            class="badge muted"
+            >—</span
+          >{% endif %}
+        </td>
         <td class="actions">
           <a href="/admin/podcasts/{{ it.id }}/edit">Редактировать</a>
-          <form action="/admin/podcasts/{{ it.id }}/delete" method="post" style="display:inline" onsubmit="return confirm('Удалить?')">
-            <button type="submit">Удалить</button>
+          <form
+            action="/admin/podcasts/{{ it.id }}/delete"
+            method="post"
+            style="display: inline"
+            onsubmit="return confirm('Удалить?')"
+          >
+            <button class="btn danger" type="submit">Удалить</button>
           </form>
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+</div>
 {% endblock %}
-

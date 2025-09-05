@@ -1,6 +1,6 @@
-{% extends "admin/base.html" %}
-{% block content %}
-  <h2>Транзакции</h2>
+{% extends "admin/base.html" %} {% block content %}
+<div class="page-title">Транзакции</div>
+<div class="card">
   <table>
     <thead>
       <tr>
@@ -19,11 +19,22 @@
         <td>{{ it.user.telegram_id if it.user else '' }}</td>
         <td>{{ it.type }}</td>
         <td>{{ it.podcast.title if it.podcast else '' }}</td>
-        <td>{{ it.status }}</td>
-        <td>{{ it.created_at.strftime('%Y-%m-%d %H:%M') if it.created_at else '' }}</td>
+        <td>
+          {% if it.status == 'success' %}
+          <span class="badge success">success</span>
+          {% elif it.status == 'failed' %}
+          <span class="badge danger">failed</span>
+          {% else %}
+          <span class="badge muted">{{ it.status }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {{ it.created_at.strftime('%Y-%m-%d %H:%M') if it.created_at else ''
+          }}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+</div>
 {% endblock %}
-

@@ -1,9 +1,9 @@
-{% extends "admin/base.html" %}
-{% block content %}
-  <h2>Карточки проектов</h2>
-  <div class="toolbar">
-    <a class="btn" href="/admin/projects/create">Добавить</a>
-  </div>
+{% extends "admin/base.html" %} {% block content %}
+<div class="page-title">Карточки проектов</div>
+<div class="toolbar">
+  <a class="btn" href="/admin/projects/create">Добавить</a>
+</div>
+<div class="card">
   <table>
     <thead>
       <tr>
@@ -22,16 +22,24 @@
         <td>{{ it.title }}</td>
         <td>{{ it.url }}</td>
         <td>{{ it.order }}</td>
-        <td>{{ 'Да' if it.is_internal else 'Нет' }}</td>
+        <td>
+          {% if it.is_internal %}<span class="badge success">Да</span>{% else
+          %}<span class="badge muted">Нет</span>{% endif %}
+        </td>
         <td class="actions">
           <a href="/admin/projects/{{ it.id }}/edit">Редактировать</a>
-          <form action="/admin/projects/{{ it.id }}/delete" method="post" style="display:inline" onsubmit="return confirm('Удалить?')">
-            <button type="submit">Удалить</button>
+          <form
+            action="/admin/projects/{{ it.id }}/delete"
+            method="post"
+            style="display: inline"
+            onsubmit="return confirm('Удалить?')"
+          >
+            <button class="btn danger" type="submit">Удалить</button>
           </form>
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+</div>
 {% endblock %}
-

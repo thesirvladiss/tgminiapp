@@ -1,19 +1,52 @@
-{% extends "admin/base.html" %}
-{% block content %}
-  <h2>{% if item %}Редактировать карточку{% else %}Новая карточка{% endif %}</h2>
-  <form method="post">
-    <label>Заголовок</label>
-    <input type="text" name="title" value="{{ item.title if item else '' }}" required />
+{% extends "admin/base.html" %} {% block content %}
+<div class="page-title">
+  {% if item %}Редактировать карточку{% else %}Новая карточка{% endif %}
+</div>
+<div class="card">
+  <div class="card-body">
+    <form method="post">
+      <label>Заголовок</label>
+      <input
+        type="text"
+        name="title"
+        value="{{ item.title if item else '' }}"
+        required
+      />
 
-    <label>Ссылка</label>
-    <input type="text" name="url" value="{{ item.url if item else '' }}" required />
+      <label>Ссылка</label>
+      <input
+        type="text"
+        name="url"
+        value="{{ item.url if item else '' }}"
+        required
+      />
 
-    <label>Порядок</label>
-    <input type="number" name="order" value="{{ item.order if item else 0 }}" />
+      <label>Порядок</label>
+      <input
+        type="number"
+        name="order"
+        value="{{ item.order if item else 0 }}"
+      />
 
-    <label><input type="checkbox" name="is_internal" value="true" {% if item and item.is_internal %}checked{% endif %}/> Внутренний раздел</label>
+      <label
+        ><input
+          type="checkbox"
+          name="is_internal"
+          value="true"
+          {%
+          if
+          item
+          and
+          item.is_internal
+          %}checked{%
+          endif
+          %}
+        />
+        Внутренний раздел</label
+      >
 
-    <button type="submit">Сохранить</button>
-  </form>
+      <button class="btn" type="submit">Сохранить</button>
+    </form>
+  </div>
+</div>
 {% endblock %}
-

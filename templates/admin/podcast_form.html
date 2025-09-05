@@ -1,35 +1,90 @@
-{% extends "admin/base.html" %}
-{% block content %}
-  <h2>{% if item %}Редактировать подкаст{% else %}Новый подкаст{% endif %}</h2>
-  <form method="post" enctype="multipart/form-data">
-    <label>Заголовок</label>
-    <input type="text" name="title" value="{{ item.title if item else '' }}" required />
+{% extends "admin/base.html" %} {% block content %}
+<div class="page-title">
+  {% if item %}Редактировать подкаст{% else %}Новый подкаст{% endif %}
+</div>
+<div class="card">
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      <label>Заголовок</label>
+      <input
+        type="text"
+        name="title"
+        value="{{ item.title if item else '' }}"
+        required
+      />
 
-    <label>Описание</label>
-    <textarea name="description" rows="5">{{ item.description if item else '' }}</textarea>
+      <label>Описание</label>
+      <textarea name="description" rows="5">
+{{ item.description if item else '' }}</textarea
+      >
 
-    <label>Категория</label>
-    <input type="text" name="category" value="{{ item.category if item else '' }}" />
+      <label>Категория</label>
+      <input
+        type="text"
+        name="category"
+        value="{{ item.category if item else '' }}"
+      />
 
-    <label>Дата публикации</label>
-    <input type="datetime-local" name="published_at" value="{{ item.published_at.strftime('%Y-%m-%dT%H:%M:%S') if item and item.published_at else '' }}" />
+      <label>Дата публикации</label>
+      <input
+        type="datetime-local"
+        name="published_at"
+        value="{{ item.published_at.strftime('%Y-%m-%dT%H:%M:%S') if item and item.published_at else '' }}"
+      />
 
-    <label><input type="checkbox" name="is_published" value="true" {% if item and item.is_published %}checked{% endif %}/> Опубликован</label>
-    <label><input type="checkbox" name="is_free" value="true" {% if item and item.is_free %}checked{% endif %}/> Бесплатный выпуск</label>
+      <label
+        ><input
+          type="checkbox"
+          name="is_published"
+          value="true"
+          {%
+          if
+          item
+          and
+          item.is_published
+          %}checked{%
+          endif
+          %}
+        />
+        Опубликован</label
+      >
+      <label
+        ><input
+          type="checkbox"
+          name="is_free"
+          value="true"
+          {%
+          if
+          item
+          and
+          item.is_free
+          %}checked{%
+          endif
+          %}
+        />
+        Бесплатный выпуск</label
+      >
 
-    <label>Обложка (jpg/png)</label>
-    <input type="file" name="cover" accept="image/*" />
-    {% if item and item.cover_path %}<div class="muted">Текущая: {{ item.cover_path }}</div>{% endif %}
+      <label>Обложка (jpg/png)</label>
+      <input type="file" name="cover" accept="image/*" />
+      {% if item and item.cover_path %}
+      <div class="muted">Текущая: {{ item.cover_path }}</div>
+      {% endif %}
 
-    <label>Preview (5 минут, mp3)</label>
-    <input type="file" name="preview" accept="audio/mpeg" />
-    {% if item and item.audio_preview_path %}<div class="muted">Текущий: {{ item.audio_preview_path }}</div>{% endif %}
+      <label>Preview (5 минут, mp3)</label>
+      <input type="file" name="preview" accept="audio/mpeg" />
+      {% if item and item.audio_preview_path %}
+      <div class="muted">Текущий: {{ item.audio_preview_path }}</div>
+      {% endif %}
 
-    <label>Full (mp3)</label>
-    <input type="file" name="full" accept="audio/mpeg" />
-    {% if item and item.audio_full_path %}<div class="muted">Текущий: {{ item.audio_full_path }}</div>{% endif %}
+      <label>Full (mp3)</label>
+      <input type="file" name="full" accept="audio/mpeg" />
+      {% if item and item.audio_full_path %}
+      <div class="muted">Текущий: {{ item.audio_full_path }}</div>
+      {% endif %}
 
-    <button type="submit">Сохранить</button>
-  </form>
+      <button class="btn" type="submit">Сохранить</button>
+    </form>
+  </div>
+</div>
 {% endblock %}
-

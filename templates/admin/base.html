@@ -4,43 +4,27 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Админка</title>
-    <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 0; color: #222 }
-      header { background: #111; color: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center }
-      header a { color: #fff; text-decoration: none; margin-left: 12px }
-      .container { padding: 16px; max-width: 1024px; margin: 0 auto }
-      nav a { margin-right: 12px }
-      table { border-collapse: collapse; width: 100% }
-      th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top }
-      th { background: #f3f3f3; text-align: left }
-      .actions a, .actions button { margin-right: 8px }
-      form { display: grid; grid-template-columns: 1fr; gap: 12px; max-width: 640px }
-      input[type="text"], input[type="number"], input[type="datetime-local"], textarea { width: 100%; padding: 8px; border: 1px solid #bbb; border-radius: 4px }
-      input[type="checkbox"] { transform: scale(1.2) }
-      .toolbar { margin: 12px 0 }
-      .btn { display: inline-block; padding: 6px 10px; background:#222; color:#fff; border-radius:4px; text-decoration:none }
-      .muted { color: #666 }
-    </style>
+    <link rel="stylesheet" href="/static/admin.css" />
   </head>
   <body>
     <header>
-      <div>
-        <strong>Админка</strong>
-        <nav style="display:inline-block; margin-left:16px">
-          <a href="/admin">Главная</a>
-          <a href="/admin/projects">Проекты</a>
-          <a href="/admin/podcasts">Подкасты</a>
-          <a href="/admin/transactions">Транзакции</a>
-          <a href="/admin/users">Пользователи</a>
-        </nav>
-      </div>
-      <div>
-        <a href="/admin/logout">Выйти</a>
+      <div class="topbar">
+        <div class="brand">
+          <span class="dot"></span>
+          <span>Админка</span>
+          <nav class="nav">
+            <a href="/admin" aria-label="Главная">Главная</a>
+            <a href="/admin/projects" aria-label="Проекты">Проекты</a>
+            <a href="/admin/podcasts" aria-label="Подкасты">Подкасты</a>
+            <a href="/admin/transactions" aria-label="Транзакции">Транзакции</a>
+            <a href="/admin/users" aria-label="Пользователи">Пользователи</a>
+          </nav>
+        </div>
+        <div class="logout">
+          <a href="/admin/logout">Выйти</a>
+        </div>
       </div>
     </header>
-    <div class="container">
-      {% block content %}{% endblock %}
-    </div>
+    <div class="container">{% block content %}{% endblock %}</div>
   </body>
-  </html>
-
+</html>
