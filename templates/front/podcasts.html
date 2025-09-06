@@ -43,6 +43,8 @@
                   <span>{{ (p.duration_seconds // 60) or 0 }} мин</span>
                 </div>
                 <p>Категория: {{ p.category or '—' }}</p>
+                {% if p.is_free %}<span class="chip free">Бесплатно</span>{%
+                endif %}
               </div>
               <a href="/podcasts/{{ p.id }}" class="btn-orange">Слушать</a>
             </div>

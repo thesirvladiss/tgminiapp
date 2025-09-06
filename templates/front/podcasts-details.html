@@ -40,6 +40,11 @@
           >
           <h2>{{ podcast.title }}</h2>
           <p>{{ podcast.description or '' }}</p>
+          {% if podcast.is_free %}
+          <div style="margin-top: 8px">
+            <span class="chip free">Бесплатно</span>
+          </div>
+          {% endif %}
         </div>
 
         <div class="podcast" data-podcast>
