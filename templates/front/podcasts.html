@@ -14,6 +14,11 @@
   <body>
     <div class="wrapper">
       <main class="app">
+        <div class="backbar">
+          <a href="#" class="btn-back" onclick="history.back(); return false;"
+            >Назад</a
+          >
+        </div>
         <header>
           <h1>Подкасты</h1>
         </header>
@@ -22,7 +27,10 @@
           {% for p in podcasts %}
           <div class="podcast-item">
             <div class="podcast-titles">
-              <p>{{ (p.published_at.strftime('%d.%m.%Y') if p.published_at else '') }}</p>
+              <p>
+                {{ (p.published_at.strftime('%d.%m.%Y') if p.published_at else
+                '') }}
+              </p>
               <h2>{{ p.title }}</h2>
             </div>
             <div class="podcast-body">
@@ -40,9 +48,12 @@
         </div>
       </main>
       <div class="section-bg">
-        <img src="{{ url_for('static', path='assets/img/background2.webp') }}" alt="" />
+        <img
+          src="{{ url_for('static', path='assets/img/background2.webp') }}"
+          alt=""
+        />
       </div>
     </div>
-  <script src="{{ url_for('static', path='assets/js/main.js') }}"></script>
+    <script src="{{ url_for('static', path='assets/js/main.js') }}"></script>
   </body>
 </html>

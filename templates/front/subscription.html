@@ -15,6 +15,11 @@
   <body>
     <div class="wrapper">
       <main class="app">
+        <div class="backbar">
+          <a href="#" class="btn-back" onclick="history.back(); return false;"
+            >Назад</a
+          >
+        </div>
         <header>
           <div class="subscription-titles">
             <h1>
@@ -24,52 +29,63 @@
             </h1>
             <p>Вы можете купить отдельный выпуск или оформить подписку</p>
           </div>
-          
         </header>
 
         <div class="subscription-items">
-
-            <div class="subscription-item active">
+          <div
+            class="subscription-item {% if not podcast_id %}active{% endif %}"
+          >
             <div class="subscription-item-icon"></div>
             <div class="subscription-item-titles">
-               <h2>Подписка</h2>
-               <p>1500 ₽</p>
+              <h2>Подписка</h2>
+              <p>1500 ₽</p>
             </div>
           </div>
 
-          <div class="subscription-item">
+          <div class="subscription-item {% if podcast_id %}active{% endif %}">
             <div class="subscription-item-icon"></div>
             <div class="subscription-item-titles">
-               <h2>Разовый выпуск</h2>
-               <p>200 ₽</p>
+              <h2>Разовый выпуск</h2>
+              <p>200 ₽</p>
             </div>
           </div>
-
         </div>
 
         <div class="subscription-btn">
           <form method="post" action="/checkout">
-            <input type="hidden" name="podcast_id" value="{{ podcast_id or '' }}" />
-            <input type="hidden" name="tariff" id="tariff" value="subscription" />
+            <input
+              type="hidden"
+              name="podcast_id"
+              value="{{ podcast_id or '' }}"
+            />
+            <input
+              type="hidden"
+              name="tariff"
+              id="tariff"
+              value="{% if podcast_id %}single{% else %}subscription{% endif %}"
+            />
             <button class="btn-orange" type="submit">перейти к оплате</button>
           </form>
         </div>
       </main>
 
       <div class="section-bg">
-        <img src="{{ url_for('static', path='assets/img/background1.png') }}" alt="" />
+        <img
+          src="{{ url_for('static', path='assets/img/background1.png') }}"
+          alt=""
+        />
       </div>
     </div>
     <script src="{{ url_for('static', path='assets/js/main.js') }}"></script>
     <script>
-      const items = document.querySelectorAll('.subscription-item');
-      const tariffInput = document.getElementById('tariff');
+      const items = document.querySelectorAll(".subscription-item");
+      const tariffInput = document.getElementById("tariff");
       if (items.length && tariffInput) {
         items.forEach((el, idx) => {
-          el.addEventListener('click', () => {
-            items.forEach(e => e.classList.remove('active'));
-            el.classList.add('active');
-            tariffInput.value = idx === 0 ? 'subscription' : 'single';
+          el.addEventListener("click", () => {
+            items.forEach((e) => e.classList.remove("active"));
+            el.classList.add("active");
+            tariffInput.value = idx === 0 ? "subscription" : "single";
           });
         });
       }
