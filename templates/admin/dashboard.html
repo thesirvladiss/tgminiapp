@@ -3,15 +3,136 @@
 <div class="toolbar">
   <a class="btn" href="/admin/projects">Управление проектами</a>
   <a class="btn secondary" href="/admin/podcasts">Магазин подкастов</a>
+  <a class="btn secondary" href="/admin/transactions">Транзакции</a>
+  <a class="btn secondary" href="/admin/users">Пользователи</a>
 </div>
-<div class="card">
-  <div class="card-body">
-    <div class="muted">
-      Опубликовано подкастов:
-      <span class="badge success">{{ stats.published }}</span>
+
+<div
+  class="cards-grid"
+  style="
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  "
+>
+  <div class="card">
+    <div class="card-body">
+      <div class="muted">Всего подкастов</div>
+      <div style="font-size: 24px; font-weight: 700">{{ stats.podcasts }}</div>
     </div>
-    <div class="muted" style="margin-top: 8px">
-      Транзакций: <span class="badge warning">{{ stats.transactions }}</span>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="muted">Опубликовано</div>
+      <div style="font-size: 24px; font-weight: 700">
+        <span class="badge success">{{ stats.published }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="muted">Черновики</div>
+      <div style="font-size: 24px; font-weight: 700">
+        <span class="badge muted">{{ stats.drafts }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="muted">Пользователи</div>
+      <div style="font-size: 24px; font-weight: 700">{{ stats.users }}</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="muted">Подписки</div>
+      <div style="font-size: 24px; font-weight: 700">
+        <span class="badge success">{{ stats.subscriptions }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="muted">Транзакции</div>
+      <div style="font-size: 24px; font-weight: 700">
+        {{ stats.transactions }}
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="muted">Успешные платежи</div>
+      <div style="font-size: 24px; font-weight: 700">
+        <span class="badge success">{{ stats.success_tx }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+  <div class="card">
+    <div class="card-body">
+      <div class="muted" style="margin-bottom: 8px">Последние подкасты</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Название</th>
+            <th>Дата</th>
+            <th>Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in latest_podcasts %}
+          <tr>
+            <td>{{ p.title }}</td>
+            <td>
+              {{ p.published_at.strftime('%Y-%m-%d') if p.published_at else ''
+              }}
+            </td>
+            <td>
+              {% if p.is_published %}<span class="badge success">Опубл.</span>{%
+              else %}<span class="badge muted">Черновик</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="muted" style="margin-bottom: 8px">Последние транзакции</div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Пользователь</th>
+            <th>Тип</th>
+            <th>Статус</th>
+            <th>Дата</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in latest_transactions %}
+          <tr>
+            <td>{{ t.id }}</td>
+            <td>{{ t.user.telegram_id if t.user else '' }}</td>
+            <td>{{ t.type }}</td>
+            <td>
+              {% if t.status == 'success' %}<span class="badge success"
+                >success</span
+              >{% else %}<span class="badge danger">{{ t.status }}</span>{%
+              endif %}
+            </td>
+            <td>
+              {{ t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else ''
+              }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

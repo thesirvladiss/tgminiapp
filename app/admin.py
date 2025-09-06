@@ -30,16 +30,41 @@ def _guard(request: Request) -> Optional[RedirectResponse]:
 def dashboard(request: Request, db: Session = Depends(get_db)):
     if redirect := _guard(request):
         return redirect
+    total_podcasts = db.query(models.Podcast).count()
     total_published = db.query(models.Podcast).filter(models.Podcast.is_published.is_(True)).count()
+    total_drafts = max(0, total_podcasts - total_published)
+    total_users = db.query(models.User).count()
+    total_subscriptions = db.query(models.User).filter(models.User.has_subscription.is_(True)).count()
     total_transactions = db.query(models.Transaction).count()
+    total_success_tx = db.query(models.Transaction).filter(models.Transaction.status == "success").count()
+
+    latest_podcasts = (
+        db.query(models.Podcast)
+        .order_by(models.Podcast.published_at.desc())
+        .limit(5)
+        .all()
+    )
+    latest_transactions = (
+        db.query(models.Transaction)
+        .order_by(models.Transaction.created_at.desc())
+        .limit(5)
+        .all()
+    )
     return templates.TemplateResponse(
         "admin/dashboard.html",
         {
             "request": request,
             "stats": {
+                "podcasts": total_podcasts,
                 "published": total_published,
+                "drafts": total_drafts,
+                "users": total_users,
+                "subscriptions": total_subscriptions,
                 "transactions": total_transactions,
+                "success_tx": total_success_tx,
             },
+            "latest_podcasts": latest_podcasts,
+            "latest_transactions": latest_transactions,
         },
     )
 
