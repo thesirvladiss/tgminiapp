@@ -26,6 +26,13 @@ def _guard(request: Request) -> Optional[RedirectResponse]:
     return require_auth(request)
 
 
+def _has_file(upload: UploadFile | None) -> bool:
+    try:
+        return bool(upload and getattr(upload, "filename", None))
+    except Exception:
+        return False
+
+
 @router.get("/", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)):
     if redirect := _guard(request):
@@ -177,8 +184,8 @@ def podcast_create(
     if redirect := _guard(request):
         return redirect
 
-    cover_path = _save_upload(cover) if cover else None
-    full_path = _save_upload(full) if full else None
+    cover_path = _save_upload(cover) if _has_file(cover) else None
+    full_path = _save_upload(full) if _has_file(full) else None
     duration = _get_duration_seconds(full_path) if full_path else 0
 
     pub_dt = datetime.fromisoformat(published_at) if published_at else datetime.utcnow()
@@ -232,9 +239,9 @@ def podcast_edit(
     item.category = category
     item.published_at = datetime.fromisoformat(published_at) if published_at else item.published_at
     item.is_published = is_published
-    if cover:
+    if _has_file(cover):
         item.cover_path = _save_upload(cover)
-    if full:
+    if _has_file(full):
         item.audio_full_path = _save_upload(full)
         item.duration_seconds = _get_duration_seconds(item.audio_full_path)
 
