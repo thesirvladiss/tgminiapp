@@ -333,8 +333,9 @@ def _user_has_full_access(user: models.User | None, podcast: models.Podcast, db:
         return False
     if user.has_subscription:
         return True
-    # free podcast if not used or same as used
-    
+    # free podcast
+    if podcast.is_free:
+        return True
     # check single purchase
     has_single = (
         db.query(models.Transaction)

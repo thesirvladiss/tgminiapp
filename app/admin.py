@@ -4,6 +4,7 @@ import os
 
 from fastapi import APIRouter, Depends, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -177,6 +178,7 @@ def podcast_create(
     category: str = Form("") ,
     published_at: str = Form("") ,
     is_published: bool = Form(False),
+    is_free: bool = Form(False),
     cover: UploadFile | None = File(None),
     full: UploadFile | None = File(None),
     db: Session = Depends(get_db),
@@ -199,6 +201,7 @@ def podcast_create(
         cover_path=cover_path,
         audio_full_path=full_path,
         is_published=is_published,
+        is_free=is_free,
     )
     db.add(item)
     db.commit()
@@ -224,6 +227,7 @@ def podcast_edit(
     category: str = Form("") ,
     published_at: str = Form("") ,
     is_published: bool = Form(False),
+    is_free: bool = Form(False),
     cover: UploadFile | None = File(None),
     full: UploadFile | None = File(None),
     db: Session = Depends(get_db),
@@ -239,6 +243,7 @@ def podcast_edit(
     item.category = category
     item.published_at = datetime.fromisoformat(published_at) if published_at else item.published_at
     item.is_published = is_published
+    item.is_free = is_free
     if _has_file(cover):
         item.cover_path = _save_upload(cover)
     if _has_file(full):
@@ -324,5 +329,61 @@ def _get_duration_seconds(path: Optional[str]) -> int:
         return int(audio.info.length)
     except Exception:
         return 0
+
+
+@router.get("/export")
+def export_excel(request: Request, db: Session = Depends(get_db)):
+    """Экспорт данных в CSV (совместимо с Excel без дополнительных зависимостей)."""
+    import io, csv
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Podcasts
+    writer.writerow(["Podcasts"])
+    writer.writerow(["id", "title", "category", "published_at", "duration_min", "is_published", "is_free"])
+    for p in db.query(models.Podcast).order_by(models.Podcast.id.asc()).all():
+        writer.writerow([
+            p.id,
+            p.title,
+            p.category or "",
+            p.published_at.strftime('%Y-%m-%d %H:%M') if p.published_at else "",
+            (p.duration_seconds or 0)//60,
+            1 if p.is_published else 0,
+            1 if getattr(p, 'is_free', False) else 0,
+        ])
+    writer.writerow([])
+
+    # Users
+    writer.writerow(["Users"])
+    writer.writerow(["id", "telegram_id", "has_subscription", "created_at"])
+    for u in db.query(models.User).order_by(models.User.id.asc()).all():
+        writer.writerow([
+            u.id,
+            u.telegram_id,
+            1 if u.has_subscription else 0,
+            u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else "",
+        ])
+    writer.writerow([])
+
+    # Transactions
+    writer.writerow(["Transactions"])
+    writer.writerow(["id", "user_id", "type", "podcast_id", "status", "created_at"])
+    for t in db.query(models.Transaction).order_by(models.Transaction.id.asc()).all():
+        writer.writerow([
+            t.id,
+            t.user_id,
+            t.type,
+            t.podcast_id or "",
+            t.status,
+            t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else "",
+        ])
+
+    mem = io.BytesIO(output.getvalue().encode('utf-8-sig'))
+    headers = {
+        "Content-Disposition": "attachment; filename=export.csv",
+        "Content-Type": "text/csv; charset=utf-8",
+    }
+    return StreamingResponse(mem, headers=headers, media_type="text/csv")
 
 

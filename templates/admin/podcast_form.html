@@ -48,6 +48,22 @@
         />
         Опубликован</label
       >
+      <label
+        ><input
+          type="checkbox"
+          name="is_free"
+          value="true"
+          {%
+          if
+          item
+          and
+          item.is_free
+          %}checked{%
+          endif
+          %}
+        />
+        Бесплатный</label
+      >
 
       <label>Обложка (jpg/png)</label>
       <input type="file" name="cover" accept="image/*" />

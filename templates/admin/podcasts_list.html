@@ -13,6 +13,7 @@
         <th>Дата</th>
         <th>Длительность</th>
         <th>Опубл.</th>
+        <th>Метки</th>
         <th>Действия</th>
       </tr>
     </thead>
@@ -24,6 +25,13 @@
         <td>{{ it.category or '' }}</td>
         <td>
           {{ it.published_at.strftime('%Y-%m-%d') if it.published_at else '' }}
+        </td>
+        <td>
+          {% if it.is_free %}
+          <span class="badge warning">FREE</span>
+          {% else %}
+          <span class="badge muted">—</span>
+          {% endif %}
         </td>
         <td>{{ (it.duration_seconds // 60) or 0 }} мин</td>
         <td>
