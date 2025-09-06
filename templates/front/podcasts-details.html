@@ -14,11 +14,6 @@
   <body>
     <div class="wrapper">
       <main class="app">
-        <div class="backbar">
-          <a href="#" class="btn-back" onclick="history.back(); return false;"
-            >Назад</a
-          >
-        </div>
         <div class="podcasts-img">
           <img
             src="{{ podcast.cover_path or url_for('static', path='assets/img/podcastsImg.webp') }}"
@@ -75,7 +70,7 @@
           </div>
           <div style="margin-top: 16px; width: 100%; display: grid; gap: 10px">
             <a class="btn-orange" href="/checkout?podcast_id={{ podcast.id }}"
-              >Опции</a
+              >Купить</a
             >
           </div>
           {% endif %} {% if has_access and audio_src %}

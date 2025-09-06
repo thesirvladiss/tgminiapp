@@ -49,15 +49,12 @@ body {
   height: 40px;
   padding: 0 14px;
   border-radius: 14px;
-  background: linear-gradient(
-    135deg,
-    var(--accent-1, #a47764),
-    var(--accent-2, #f1ded0)
-  );
-  color: #0b0b0b;
+  background: rgba(164, 119, 100, 0.8);
+  color: #f1ded0;
   text-decoration: none;
   border: 1px solid rgba(255, 255, 255, 0.22);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  line-height: 0px;
 }
 .btn-back i {
   font-size: 14px;
@@ -825,10 +822,6 @@ h1 {
   line-height: 28px;
 }
 
-.avatar {
-  width: 56px;
-  height: 56px;
-}
 .stack {
   margin-top: 24px;
 }
