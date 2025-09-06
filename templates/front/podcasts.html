@@ -34,7 +34,17 @@
                 {{ (p.published_at.strftime('%d.%m.%Y') if p.published_at else
                 '') }}
               </p>
-              <h2>{{ p.title }}</h2>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-around;
+                "
+              >
+                <h2>{{ p.title }}</h2>
+                {% if p.is_free %}<span class="chip free">Бесплатно</span>{%
+                endif %}
+              </div>
             </div>
             <div class="podcast-body">
               <div class="podcast-info">
@@ -43,8 +53,6 @@
                   <span>{{ (p.duration_seconds // 60) or 0 }} мин</span>
                 </div>
                 <p>Категория: {{ p.category or '—' }}</p>
-                {% if p.is_free %}<span class="chip free">Бесплатно</span>{%
-                endif %}
               </div>
               <a href="/podcasts/{{ p.id }}" class="btn-orange">Слушать</a>
             </div>
