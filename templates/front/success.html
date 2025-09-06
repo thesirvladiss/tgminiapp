@@ -8,14 +8,20 @@
     />
     <title>Поздравляем!</title>
     <meta name="color-scheme" content="dark light" />
-    <link rel="stylesheet" href="{{ url_for('static', path='front.css') }}" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='front.css') }}?v=2"
+    />
     <style></style>
   </head>
   <body>
     <div class="wrapper">
       <div class="info-wrapper">
         <div class="info-w-img">
-          <img src="{{ url_for('static', path='assets/img/succes.svg') }}" alt="" />
+          <img
+            src="{{ url_for('static', path='assets/img/succes.svg') }}"
+            alt=""
+          />
         </div>
         <h2>Поздравляем! <span>Доступ открыт</span></h2>
 
@@ -23,7 +29,10 @@
       </div>
 
       <div class="section-bg">
-        <img src="{{ url_for('static', path='assets/img/background4.webp') }}" alt="" />
+        <img
+          src="{{ url_for('static', path='assets/img/background4.webp') }}"
+          alt=""
+        />
       </div>
     </div>
   </body>

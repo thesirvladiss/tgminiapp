@@ -8,17 +8,15 @@
     />
     <title>Подкасты</title>
     <meta name="color-scheme" content="dark light" />
-    <link rel="stylesheet" href="{{ url_for('static', path='front.css') }}" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='front.css') }}?v=2"
+    />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
   <body>
     <div class="wrapper">
       <main class="app">
-        <div class="backbar">
-          <a href="#" class="btn-back" onclick="history.back(); return false;"
-            >Назад</a
-          >
-        </div>
         <header>
           <h1>Подкасты</h1>
           <div class="backbar">

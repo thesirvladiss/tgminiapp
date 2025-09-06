@@ -8,25 +8,32 @@
     />
     <title>Loader</title>
     <meta name="color-scheme" content="dark light" />
-    <link rel="stylesheet" href="{{ url_for('static', path='front.css') }}" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='front.css') }}?v=2"
+    />
     <style></style>
   </head>
   <body>
     <div class="wrapper">
-     
-        <div class="loader-wrapper">
-          <div class="loader">
-            <span>Загрузка...</span>
+      <div class="loader-wrapper">
+        <div class="loader">
+          <span>Загрузка...</span>
 
-            <div class="loader-img">
-              <img src="{{ url_for('static', path='assets/img/loader.png') }}" alt="" />
-            </div>
+          <div class="loader-img">
+            <img
+              src="{{ url_for('static', path='assets/img/loader.png') }}"
+              alt=""
+            />
           </div>
         </div>
-   
+      </div>
 
       <div class="section-bg">
-        <img src="{{ url_for('static', path='assets/img/background3.webp') }}" alt="" />
+        <img
+          src="{{ url_for('static', path='assets/img/background3.webp') }}"
+          alt=""
+        />
       </div>
     </div>
   </body>
