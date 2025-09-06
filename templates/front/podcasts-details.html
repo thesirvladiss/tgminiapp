@@ -38,13 +38,21 @@
             >{{ (podcast.published_at.strftime('%d.%m.%Y') if
             podcast.published_at else '') }}</span
           >
-          <h2>{{ podcast.title }}</h2>
-          <p>{{ podcast.description or '' }}</p>
-          {% if podcast.is_free %}
-          <div style="margin-top: 8px">
-            <span class="chip free">Бесплатно</span>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-around;
+            "
+          >
+            <h2>{{ podcast.title }}</h2>
+            {% if podcast.is_free %}
+            <div style="margin-top: 8px">
+              <span class="chip free">Бесплатно</span>
+            </div>
+            {% endif %}
           </div>
-          {% endif %}
+          <p>{{ podcast.description or '' }}</p>
         </div>
 
         <div class="podcast" data-podcast>
