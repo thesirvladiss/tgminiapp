@@ -58,6 +58,10 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         .limit(5)
         .all()
     )
+    # subscription price from config
+    cfg = db.query(models.AppConfig).first()
+    sub_price_cents = cfg.subscription_price_cents if cfg else 0
+
     return templates.TemplateResponse(
         "admin/dashboard.html",
         {
@@ -73,8 +77,27 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             },
             "latest_podcasts": latest_podcasts,
             "latest_transactions": latest_transactions,
+            "subscription_price_rub": int((sub_price_cents or 0) / 100),
         },
     )
+
+
+@router.post("/pricing")
+def update_pricing(request: Request, subscription_price_rub: int = Form(0), db: Session = Depends(get_db)):
+    if redirect := _guard(request):
+        return redirect
+    cfg = db.query(models.AppConfig).first()
+    if not cfg:
+        cfg = models.AppConfig(subscription_price_cents=0)
+        db.add(cfg)
+        db.commit()
+        db.refresh(cfg)
+    try:
+        cfg.subscription_price_cents = max(0, int(subscription_price_rub)) * 100
+    except Exception:
+        cfg.subscription_price_cents = 0
+    db.commit()
+    return RedirectResponse("/admin", status_code=302)
 
 
 # Projects CRUD

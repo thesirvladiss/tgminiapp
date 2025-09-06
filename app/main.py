@@ -261,8 +261,31 @@ def create_app() -> FastAPI:
                 request.headers.get("user-agent", ""),
             )
             return templates.TemplateResponse("front/loader.html", {"request": request})
+        # Prices: subscription + selected podcast price
+        from . import models
+        from sqlalchemy.orm import Session
+        db_sess: Session | None = None
+        try:
+            db_sess = get_db().__next__()
+            cfg = db_sess.query(models.AppConfig).first()
+            sub_price_rub = int(((cfg.subscription_price_cents if cfg else 0) or 0) / 100)
+            single_price_rub = 0
+            if podcast_id:
+                pp = db_sess.query(models.PodcastPrice).filter(models.PodcastPrice.podcast_id == podcast_id).first()
+                single_price_rub = int(((pp.price_cents if pp else 0) or 0) / 100)
+        except Exception:
+            sub_price_rub = 0
+            single_price_rub = 0
+        finally:
+            try:
+                if db_sess:
+                    db_sess.close()
+            except Exception:
+                pass
+
         return templates.TemplateResponse(
-            "front/subscription.html", {"request": request, "podcast_id": podcast_id}
+            "front/subscription.html",
+            {"request": request, "podcast_id": podcast_id, "sub_price_rub": sub_price_rub, "single_price_rub": single_price_rub},
         )
 
     @app.post("/checkout")
