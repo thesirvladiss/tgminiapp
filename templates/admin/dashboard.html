@@ -51,23 +51,24 @@
       <div style="font-size: 24px; font-weight: 700">
         <span class="badge success">{{ stats.subscriptions }}</span>
       </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="muted">Цена подписки, ₽</div>
       <form
         method="post"
         action="/admin/pricing"
-        style="margin-top: 10px; display: block; text-align: center"
+        style="margin-top: 8px; display: flex; gap: 8px; align-items: center"
       >
-        <label class="muted">Цена подписки, ₽</label>
-        <div style="display: block; text-align: center">
-          <input
-            type="number"
-            min="0"
-            step="1"
-            name="subscription_price_rub"
-            value="{{ subscription_price_rub }}"
-            style="text-align: center"
-          />
-          <button class="btn" type="submit">Сохранить</button>
-        </div>
+        <input
+          type="number"
+          min="0"
+          step="1"
+          name="subscription_price_rub"
+          value="{{ subscription_price_rub }}"
+        />
+        <button class="btn" type="submit">Сохранить</button>
       </form>
     </div>
   </div>
