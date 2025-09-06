@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -57,4 +57,20 @@ class Transaction(Base):
     user = relationship("User")
     podcast = relationship("Podcast")
 
+
+# Pricing models (no migration required for existing tables)
+class PodcastPrice(Base):
+    __tablename__ = "podcast_prices"
+    __table_args__ = (UniqueConstraint("podcast_id", name="uq_podcast_price_podcast"),)
+
+    id = Column(Integer, primary_key=True)
+    podcast_id = Column(Integer, ForeignKey("podcasts.id"), nullable=False)
+    price_cents = Column(Integer, default=0, nullable=False)
+
+
+class AppConfig(Base):
+    __tablename__ = "app_config"
+
+    id = Column(Integer, primary_key=True)
+    subscription_price_cents = Column(Integer, default=0, nullable=False)
 

@@ -77,6 +77,15 @@
       <div class="muted">Текущий: {{ item.audio_full_path }}</div>
       {% endif %}
 
+      <label>Цена (₽)</label>
+      <input
+        type="number"
+        min="0"
+        step="1"
+        name="price_rub"
+        value="{{ (prices[item.id]/100)|int if item and prices and (item.id in prices) else 0 }}"
+      />
+
       <button class="btn" type="submit">Сохранить</button>
     </form>
   </div>

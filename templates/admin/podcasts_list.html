@@ -11,9 +11,10 @@
         <th>Заголовок</th>
         <th>Категория</th>
         <th>Дата</th>
-        <th>Длительность</th>
-        <th>Опубл.</th>
         <th>Метки</th>
+        <th>Длительность</th>
+        <th>Опуб</th>
+        <th>Цена</th>
         <th>Действия</th>
       </tr>
     </thead>
@@ -38,7 +39,7 @@
           {% if it.is_published %}<span class="badge success">✓</span>{% else
           %}<span class="badge muted">—</span>{% endif %}
         </td>
-
+        <td>{{ ((prices.get(it.id) or 0) / 100)|round(0, 'floor') }} ₽</td>
         <td class="actions">
           <a href="/admin/podcasts/{{ it.id }}/edit">Редактировать</a>
           <form

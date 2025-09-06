@@ -160,14 +160,17 @@ def podcasts_list(request: Request, db: Session = Depends(get_db)):
     if redirect := _guard(request):
         return redirect
     items = db.query(models.Podcast).order_by(models.Podcast.published_at.desc()).all()
-    return templates.TemplateResponse("admin/podcasts_list.html", {"request": request, "items": items})
+    # map id->price
+    prices = {pp.podcast_id: pp.price_cents for pp in db.query(models.PodcastPrice).all()}
+    return templates.TemplateResponse("admin/podcasts_list.html", {"request": request, "items": items, "prices": prices})
 
 
 @router.get("/podcasts/create", response_class=HTMLResponse)
 def podcast_create_form(request: Request):
     if redirect := _guard(request):
         return redirect
-    return templates.TemplateResponse("admin/podcast_form.html", {"request": request, "item": None})
+    # provide empty prices map
+    return templates.TemplateResponse("admin/podcast_form.html", {"request": request, "item": None, "prices": {}})
 
 
 @router.post("/podcasts/create")
@@ -179,6 +182,7 @@ def podcast_create(
     published_at: str = Form("") ,
     is_published: bool = Form(False),
     is_free: bool = Form(False),
+    price_rub: int = Form(0),
     cover: UploadFile | None = File(None),
     full: UploadFile | None = File(None),
     db: Session = Depends(get_db),
@@ -205,6 +209,14 @@ def podcast_create(
     )
     db.add(item)
     db.commit()
+    # set price if provided
+    try:
+        price_cents = int(max(0, price_rub)) * 100
+    except Exception:
+        price_cents = 0
+    pp = models.PodcastPrice(podcast_id=item.id, price_cents=price_cents)
+    db.add(pp)
+    db.commit()
     return RedirectResponse("/admin/podcasts", status_code=302)
 
 
@@ -215,7 +227,8 @@ def podcast_edit_form(podcast_id: int, request: Request, db: Session = Depends(g
     item = db.get(models.Podcast, podcast_id)
     if not item:
         return RedirectResponse("/admin/podcasts", status_code=302)
-    return templates.TemplateResponse("admin/podcast_form.html", {"request": request, "item": item})
+    prices = {pp.podcast_id: pp.price_cents for pp in db.query(models.PodcastPrice).filter(models.PodcastPrice.podcast_id == item.id)}
+    return templates.TemplateResponse("admin/podcast_form.html", {"request": request, "item": item, "prices": prices})
 
 
 @router.post("/podcasts/{podcast_id}/edit")
@@ -228,6 +241,7 @@ def podcast_edit(
     published_at: str = Form("") ,
     is_published: bool = Form(False),
     is_free: bool = Form(False),
+    price_rub: int = Form(0),
     cover: UploadFile | None = File(None),
     full: UploadFile | None = File(None),
     db: Session = Depends(get_db),
@@ -250,6 +264,17 @@ def podcast_edit(
         item.audio_full_path = _save_upload(full)
         item.duration_seconds = _get_duration_seconds(item.audio_full_path)
 
+    db.commit()
+    # update price
+    try:
+        price_cents = int(max(0, price_rub)) * 100
+    except Exception:
+        price_cents = 0
+    existing = db.query(models.PodcastPrice).filter(models.PodcastPrice.podcast_id == item.id).first()
+    if existing:
+        existing.price_cents = price_cents
+    else:
+        db.add(models.PodcastPrice(podcast_id=item.id, price_cents=price_cents))
     db.commit()
     return RedirectResponse("/admin/podcasts", status_code=302)
 
