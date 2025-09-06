@@ -13,7 +13,6 @@
         <th>Дата</th>
         <th>Длительность</th>
         <th>Опубл.</th>
-        <th>Бесплатн.</th>
         <th>Действия</th>
       </tr>
     </thead>
@@ -31,12 +30,7 @@
           {% if it.is_published %}<span class="badge success">✓</span>{% else
           %}<span class="badge muted">—</span>{% endif %}
         </td>
-        <td>
-          {% if it.is_free %}<span class="badge warning">✓</span>{% else %}<span
-            class="badge muted"
-            >—</span
-          >{% endif %}
-        </td>
+
         <td class="actions">
           <a href="/admin/podcasts/{{ it.id }}/edit">Редактировать</a>
           <form

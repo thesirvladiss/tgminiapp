@@ -145,9 +145,7 @@ def podcast_create(
     category: str = Form("") ,
     published_at: str = Form("") ,
     is_published: bool = Form(False),
-    is_free: bool = Form(False),
     cover: UploadFile | None = File(None),
-    preview: UploadFile | None = File(None),
     full: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
@@ -155,7 +153,6 @@ def podcast_create(
         return redirect
 
     cover_path = _save_upload(cover) if cover else None
-    prev_path = _save_upload(preview) if preview else None
     full_path = _save_upload(full) if full else None
     duration = _get_duration_seconds(full_path) if full_path else 0
 
@@ -168,10 +165,8 @@ def podcast_create(
         published_at=pub_dt,
         duration_seconds=duration,
         cover_path=cover_path,
-        audio_preview_path=prev_path,
         audio_full_path=full_path,
         is_published=is_published,
-        is_free=is_free,
     )
     db.add(item)
     db.commit()
@@ -197,9 +192,7 @@ def podcast_edit(
     category: str = Form("") ,
     published_at: str = Form("") ,
     is_published: bool = Form(False),
-    is_free: bool = Form(False),
     cover: UploadFile | None = File(None),
-    preview: UploadFile | None = File(None),
     full: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
@@ -214,11 +207,8 @@ def podcast_edit(
     item.category = category
     item.published_at = datetime.fromisoformat(published_at) if published_at else item.published_at
     item.is_published = is_published
-    item.is_free = is_free
     if cover:
         item.cover_path = _save_upload(cover)
-    if preview:
-        item.audio_preview_path = _save_upload(preview)
     if full:
         item.audio_full_path = _save_upload(full)
         item.duration_seconds = _get_duration_seconds(item.audio_full_path)
@@ -252,6 +242,35 @@ def users(request: Request, db: Session = Depends(get_db)):
         return redirect
     items = db.query(models.User).order_by(models.User.created_at.desc()).all()
     return templates.TemplateResponse("admin/users.html", {"request": request, "items": items})
+
+
+@router.get("/users/{user_id}/edit", response_class=HTMLResponse)
+def user_edit_form(user_id: int, request: Request, db: Session = Depends(get_db)):
+    if redirect := _guard(request):
+        return redirect
+    user = db.get(models.User, user_id)
+    if not user:
+        return RedirectResponse("/admin/users", status_code=302)
+    return templates.TemplateResponse("admin/user_form.html", {"request": request, "item": user})
+
+
+@router.post("/users/{user_id}/edit")
+def user_edit(
+    user_id: int,
+    request: Request,
+    telegram_id: str = Form(...),
+    has_subscription: bool = Form(False),
+    db: Session = Depends(get_db),
+):
+    if redirect := _guard(request):
+        return redirect
+    user = db.get(models.User, user_id)
+    if not user:
+        return RedirectResponse("/admin/users", status_code=302)
+    user.telegram_id = telegram_id
+    user.has_subscription = has_subscription
+    db.commit()
+    return RedirectResponse("/admin/users", status_code=302)
 
 
 def _save_upload(file: UploadFile | None) -> Optional[str]:

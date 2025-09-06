@@ -15,15 +15,19 @@
     <div class="wrapper">
       <main class="app">
         <div class="podcasts-img">
-          <img src="{{ podcast.cover_path or url_for('static', path='assets/img/podcastsImg.webp') }}" alt="" />
+          <img
+            src="{{ podcast.cover_path or url_for('static', path='assets/img/podcastsImg.webp') }}"
+            alt=""
+          />
         </div>
 
         <div class="podcast-deatil-titles">
-          <span>{{ (podcast.published_at.strftime('%d.%m.%Y') if podcast.published_at else '') }}</span>
+          <span
+            >{{ (podcast.published_at.strftime('%d.%m.%Y') if
+            podcast.published_at else '') }}</span
+          >
           <h2>{{ podcast.title }}</h2>
-          <p>
-            {{ podcast.description or '' }}
-          </p>
+          <p>{{ podcast.description or '' }}</p>
         </div>
 
         <div class="podcast" data-podcast>
@@ -34,9 +38,10 @@
             data-play-toggle
           >
             <i class="icon icon-play2 podcast__bigplay-icon"></i>
-            <i class="icon icon-pause "></i>
+            <i class="icon icon-pause"></i>
           </button>
 
+          {% if has_access %}
           <div class="podcast__progress">
             <input
               class="podcast__range"
@@ -49,34 +54,35 @@
               name="range"
             />
           </div>
+          {% endif %}
           <div class="podcast__times">
             <span class="podcast__time" data-current-time>00:00</span>
             <span class="podcast__time" data-remaining-time>-00:00</span>
           </div>
 
           {% if has_access %}
-            <div class="podcast-tag" aria-labelledby="podcast-title">
-              Доступ открыт
-            </div>
+          <div class="podcast-tag" aria-labelledby="podcast-title">
+            Доступ открыт
+          </div>
           {% else %}
-            <div class="podcast-tag" aria-labelledby="podcast-title">
-              Бесплатный выпуск вы уже получили
-            </div>
-            <div style="margin-top: 16px; width: 100%; display: grid; gap: 10px">
-              <a class="btn-orange" href="/free-issue?podcast_id={{ podcast.id }}">Опции</a>
-            </div>
+          <div class="podcast-tag" aria-labelledby="podcast-title">
+            Купите выпуск или оформите подписку
+          </div>
+          <div style="margin-top: 16px; width: 100%; display: grid; gap: 10px">
+            <a class="btn-orange" href="/checkout?podcast_id={{ podcast.id }}"
+              >Опции</a
+            >
+          </div>
+          {% endif %} {% if has_access and audio_src %}
+          <audio preload="metadata" src="{{ audio_src }}" data-audio></audio>
           {% endif %}
-
-          <audio
-            preload="metadata"
-            src="{{ audio_src }}"
-            data-audio
-          ></audio>
-          
         </div>
       </main>
       <div class="section-bg">
-        <img src="{{ url_for('static', path='assets/img/background3.webp') }}" alt="" />
+        <img
+          src="{{ url_for('static', path='assets/img/background3.webp') }}"
+          alt=""
+        />
       </div>
     </div>
     <script src="{{ url_for('static', path='assets/js/main.js') }}"></script>

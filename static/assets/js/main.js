@@ -186,3 +186,24 @@ document.addEventListener("click", (event) => {
     }
   }
 });
+
+// Telegram BackButton integration for mini app
+try {
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.BackButton) {
+    const BB = window.Telegram.WebApp.BackButton;
+    // Show back button on pages that are not root
+    const isRoot = window.location.pathname === '/' || window.location.pathname === '';
+    if (!isRoot) {
+      BB.show();
+      BB.onClick(() => {
+        if (document.referrer && document.referrer !== window.location.href) {
+          history.back();
+        } else {
+          window.location.href = '/';
+        }
+      });
+    } else {
+      BB.hide();
+    }
+  }
+} catch (_) { }

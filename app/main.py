@@ -222,19 +222,9 @@ def create_app() -> FastAPI:
         user = _get_or_create_user(request, db)
         has_access = _user_has_full_access(user, podcast, db)
 
-        # Auto-grant first free podcast if eligible and not preview mode
-        if not preview and not has_access and podcast.is_free and user and user.free_podcast_id is None:
-            user.free_podcast_id = podcast.id
-            db.commit()
-            has_access = True
-
         audio_src = (
-            podcast.audio_full_path if has_access and podcast.audio_full_path else podcast.audio_preview_path
+            podcast.audio_full_path if has_access and podcast.audio_full_path else None
         )
-
-        # If still no audio, fallback demo
-        if not audio_src:
-            audio_src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
 
         return templates.TemplateResponse(
             "front/podcasts-details.html",
@@ -344,8 +334,7 @@ def _user_has_full_access(user: models.User | None, podcast: models.Podcast, db:
     if user.has_subscription:
         return True
     # free podcast if not used or same as used
-    if podcast.is_free and (user.free_podcast_id is None or user.free_podcast_id == podcast.id):
-        return True
+    
     # check single purchase
     has_single = (
         db.query(models.Transaction)

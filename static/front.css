@@ -35,6 +35,35 @@ body {
   min-height: 100%;
   overflow: hidden;
 }
+/* Back button container */
+.backbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: linear-gradient(
+    135deg,
+    var(--accent-1, #a47764),
+    var(--accent-2, #f1ded0)
+  );
+  color: #0b0b0b;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+.btn-back i {
+  font-size: 14px;
+  background: #0b0b0b;
+  color: #0b0b0b;
+}
 .section-bg {
   position: absolute;
   left: 0;

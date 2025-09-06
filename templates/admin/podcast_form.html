@@ -48,33 +48,11 @@
         />
         Опубликован</label
       >
-      <label
-        ><input
-          type="checkbox"
-          name="is_free"
-          value="true"
-          {%
-          if
-          item
-          and
-          item.is_free
-          %}checked{%
-          endif
-          %}
-        />
-        Бесплатный выпуск</label
-      >
 
       <label>Обложка (jpg/png)</label>
       <input type="file" name="cover" accept="image/*" />
       {% if item and item.cover_path %}
       <div class="muted">Текущая: {{ item.cover_path }}</div>
-      {% endif %}
-
-      <label>Preview (5 минут, mp3)</label>
-      <input type="file" name="preview" accept="audio/mpeg" />
-      {% if item and item.audio_preview_path %}
-      <div class="muted">Текущий: {{ item.audio_preview_path }}</div>
       {% endif %}
 
       <label>Full (mp3)</label>

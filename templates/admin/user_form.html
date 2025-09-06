@@ -1,0 +1,33 @@
+{% extends "admin/base.html" %} {% block content %}
+<div class="page-title">Редактировать пользователя</div>
+<div class="card">
+  <div class="card-body">
+    <form method="post">
+      <label>Telegram ID</label>
+      <input
+        type="text"
+        name="telegram_id"
+        value="{{ item.telegram_id }}"
+        required
+      />
+
+      <label
+        ><input
+          type="checkbox"
+          name="has_subscription"
+          value="true"
+          {%
+          if
+          item.has_subscription
+          %}checked{%
+          endif
+          %}
+        />
+        Подписка активна</label
+      >
+
+      <button class="btn" type="submit">Сохранить</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
