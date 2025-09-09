@@ -12,6 +12,10 @@ class Settings(BaseModel):
     uploads_dir: str = os.getenv("UPLOADS_DIR", "uploads")
     bot_token: str = os.getenv("BOT_TOKEN", "")
     webapp_url: str = os.getenv("WEBAPP_URL", "http://127.0.0.1:8000/")
+    # Payform (Prodamus) settings
+    payform_url: str = os.getenv("PAYFORM_URL", "https://demo.payform.ru/")
+    payform_secret: str = os.getenv("PAYFORM_SECRET", "")
+    payform_sys: str = os.getenv("PAYFORM_SYS", "")
 
 
 settings = Settings()

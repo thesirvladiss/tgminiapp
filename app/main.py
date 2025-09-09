@@ -15,6 +15,7 @@ from .auth import router as auth_router
 from .admin import router as admin_router
 from .config import settings
 from .public import router as public_router
+from .payments import router as payments_router, build_payform_link
 
 
 ACCESS_LOGGER_NAME = "app.access"
@@ -150,6 +151,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(admin_router)
     app.include_router(public_router)
+    app.include_router(payments_router)
 
     def _require_telegram(request: Request):
         if not request.session.get("telegram_id"):
@@ -306,26 +308,58 @@ def create_app() -> FastAPI:
         if not user:
             return RedirectResponse("/", status_code=302)
 
+        # Build payment link and redirect
         if tariff == "subscription":
-            user.has_subscription = True
-            txn = models.Transaction(user_id=user.id, type="subscription", status="success")
-            db.add(txn)
-            db.commit()
-            return RedirectResponse("/success", status_code=302)
-
-        if tariff == "single" and podcast_id:
-            txn = models.Transaction(
-                user_id=user.id, type="single", podcast_id=podcast_id, status="success"
+            cfg = db.query(models.AppConfig).first()
+            price_cents = (cfg.subscription_price_cents if cfg else 0) or 0
+            item_name = "Подписка"
+            target_podcast_id = None
+        elif tariff == "single" and podcast_id:
+            pp = (
+                db.query(models.PodcastPrice)
+                .filter(models.PodcastPrice.podcast_id == podcast_id)
+                .first()
             )
-            db.add(txn)
-            db.commit()
-            return RedirectResponse("/success", status_code=302)
+            price_cents = (pp.price_cents if pp else 0) or 0
+            p = db.get(models.Podcast, podcast_id)
+            item_name = f"Подкаст: {p.title if p else podcast_id}"
+            target_podcast_id = podcast_id
+        else:
+            return RedirectResponse("/checkout", status_code=302)
 
-        return RedirectResponse("/checkout", status_code=302)
+        txn = models.Transaction(
+            user_id=user.id,
+            type="subscription" if tariff == "subscription" else "single",
+            podcast_id=target_podcast_id,
+            status="pending",
+        )
+        db.add(txn)
+        db.commit()
+        db.refresh(txn)
+
+        rub_amount = max(0, price_cents // 100)
+        payload = {
+            "order_id": f"txn-{txn.id}",
+            "products": [
+                {"name": item_name, "price": rub_amount, "quantity": 1},
+            ],
+            "customer_extra": f"tg:{user.telegram_id}",
+            "do": "pay",
+            "urlReturn": settings.webapp_url.rstrip("/") + "/failed",
+            "urlSuccess": settings.webapp_url.rstrip("/") + "/success",
+            "urlNotification": settings.webapp_url.rstrip("/") + "/api/payments/webhook",
+            "sys": settings.payform_sys or None,
+        }
+        link = build_payform_link(payload)
+        return RedirectResponse(link, status_code=302)
 
     @app.get("/success", response_class=HTMLResponse)
     def success(request: Request):
         return templates.TemplateResponse("front/success.html", {"request": request})
+
+    @app.get("/failed", response_class=HTMLResponse)
+    def failed(request: Request):
+        return templates.TemplateResponse("front/failed.html", {"request": request})
 
     return app
 
