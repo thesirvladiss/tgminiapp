@@ -16,128 +16,106 @@ router = APIRouter(prefix="/api/payments", tags=["payments"])
 logger = logging.getLogger("app.payments")
 
 
-def _flatten_for_signature(data: Dict[str, Any], parent_key: str = "") -> List[Tuple[str, Any]]:
-    """
-    Generic flattener (legacy). Kept for reference but not used for Prodamus.
-    """
-    items: List[Tuple[str, Any]] = []
-    for key, value in data.items():
-        full_key = f"{parent_key}[{key}]" if parent_key else str(key)
-        if value is None:
-            continue
-        if isinstance(value, dict):
-            items.extend(_flatten_for_signature(value, full_key))
-        elif isinstance(value, list):
-            for idx, item in enumerate(value):
-                idx_key = f"{full_key}[{idx}]"
-                if isinstance(item, dict):
-                    items.extend(_flatten_for_signature(item, idx_key))
-                else:
-                    items.append((idx_key, item))
-        else:
-            items.append((full_key, value))
-    return items
-
-
-def _flatten_prodamus(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
-    """
-    Prodamus PHP Hmac::create expects PHP-style keys. Based on docs examples:
-    - products list is flattened as products[{idx}]name, products[{idx}]price, products[{idx}]quantity
-    - nested dicts under product (e.g. tax) use products[{idx}]tax[tax_type]
-    - other dicts use bracket notation k[child]
-    - None values are skipped
-    - Returns list of (key, value) pairs without URL encoding
-    """
-    pairs: List[Tuple[str, Any]] = []
-
-    def add_pair(k: str, v: Any):
-        if v is None:
-            return
-        pairs.append((k, v))
-
-    for key, value in data.items():
-        if value is None:
-            continue
-        if key == "products" and isinstance(value, list):
-            for idx, item in enumerate(value):
-                if isinstance(item, dict):
-                    for pkey, pval in item.items():
-                        if pval is None:
-                            continue
-                        if isinstance(pval, dict):
-                            # products[{idx}]tax[tax_type]=...
-                            for sk, sv in pval.items():
-                                if sv is None:
-                                    continue
-                                add_pair(f"products[{idx}][{pkey}][{sk}]", sv)
-                        else:
-                            # products[{idx}][name]=..., price=..., quantity=...
-                            add_pair(f"products[{idx}][{pkey}]", pval)
-                else:
-                    # non-dict product element (unlikely)
-                    add_pair(f"products[{idx}]", item)
-        elif isinstance(value, dict):
-            # generic dict -> k[child]
-            for sk, sv in value.items():
-                if sv is None:
-                    continue
-                if isinstance(sv, dict):
-                    for ssk, ssv in sv.items():
-                        if ssv is None:
-                            continue
-                        add_pair(f"{key}[{sk}][{ssk}]", ssv)
-                elif isinstance(sv, list):
-                    for sidx, sitem in enumerate(sv):
-                        add_pair(f"{key}[{sk}][{sidx}]", sitem)
-                else:
-                    add_pair(f"{key}[{sk}]", sv)
-        elif isinstance(value, list):
-            for idx, item in enumerate(value):
-                add_pair(f"{key}[{idx}]", item)
-        else:
-            add_pair(str(key), value)
-
-    return pairs
-
-
-def _create_signature(payload: Dict[str, Any], secret_key: str) -> str:
-    # все поля, кроме 'signature'
-    data = {k: v for k, v in payload.items() if k != "signature" and v is not None}
-    flat = _flatten_prodamus(data)                 # products[0][name] и т.п.
-    flat.sort(key=lambda kv: kv[0])                # сортировка по ключу
-    sign_src = "&".join(f"{k}={v}" for k, v in flat)  # БЕЗ url-энкодинга
-    return hmac.new(secret_key.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
-
-
-
 def build_payform_link(data: Dict[str, Any]) -> str:
+    """
+    Строим ссылку на оплату по документации Продамуса.
+    Минимальный набор: do, products, order_id
+    """
     base = settings.payform_url.rstrip("/") + "/"
-    payload = {k: v for k, v in data.items() if v is not None}
-
+    
+    # Минимальный набор параметров
+    payload = {
+        "do": data.get("do", "pay"),
+        "order_id": data.get("order_id"),
+        "products": data.get("products", [])
+    }
+    
+    # Добавляем опциональные параметры если есть
+    if data.get("customer_phone"):
+        payload["customer_phone"] = data["customer_phone"]
+    if data.get("customer_email"):
+        payload["customer_email"] = data["customer_email"]
+    if data.get("customer_extra"):
+        payload["customer_extra"] = data["customer_extra"]
+    if data.get("urlReturn"):
+        payload["urlReturn"] = data["urlReturn"]
+    if data.get("urlSuccess"):
+        payload["urlSuccess"] = data["urlSuccess"]
+    if data.get("urlNotification"):
+        payload["urlNotification"] = data["urlNotification"]
+    if data.get("sys"):
+        payload["sys"] = data["sys"]
+    
+    # Если есть секрет - добавляем подпись
     if settings.payform_secret:
-        # лог: что именно подписываем
-        flat_for_sign = _flatten_prodamus({k: v for k, v in payload.items() if k != "signature"})
-        flat_for_sign.sort(key=lambda kv: kv[0])
-        sign_src = "&".join(f"{k}={v}" for k, v in flat_for_sign)
-        logger.info("payform.sign.keys: %s", [k for k, _ in flat_for_sign])
-        logger.info("payform.sign.src: %s", sign_src)
+        signature = create_signature(payload, settings.payform_secret)
+        payload["signature"] = signature
+        logger.info("payform.signature: %s", signature)
+    
+    # Строим query string
+    from urllib.parse import urlencode
+    query_parts = []
+    
+    # Обрабатываем products отдельно (нужны скобки)
+    for key, value in payload.items():
+        if key == "products":
+            for i, product in enumerate(value):
+                query_parts.append(f"products[{i}][name]={product['name']}")
+                query_parts.append(f"products[{i}][price]={product['price']}")
+                query_parts.append(f"products[{i}][quantity]={product['quantity']}")
+        else:
+            query_parts.append(f"{key}={value}")
+    
+    query = "&".join(query_parts)
+    link = f"{base}?{query}"
+    
+    logger.info("payform.link: %s", link[:200] + "..." if len(link) > 200 else link)
+    return link
 
-        payload["signature"] = _create_signature(payload, settings.payform_secret)
 
-    # Затем уже формируем ссылку с URL-энкодингом
-    from urllib.parse import quote_plus
-    query = "&".join(f"{quote_plus(str(k))}={quote_plus(str(v))}" for k, v in _flatten_prodamus(payload))
-    return f"{base}?{query}" if query else base
+def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
+    """
+    Создаем подпись по документации Продамуса.
+    Сортируем параметры по ключу, исключаем signature, склеиваем через &
+    """
+    # Исключаем signature из подписи
+    sign_data = {k: v for k, v in payload.items() if k != "signature"}
+    
+    # Сортируем по ключу
+    sorted_keys = sorted(sign_data.keys())
+    
+    # Собираем строку для подписи
+    sign_parts = []
+    for key in sorted_keys:
+        value = sign_data[key]
+        if key == "products":
+            # Обрабатываем products отдельно
+            for i, product in enumerate(value):
+                sign_parts.append(f"products[{i}][name]={product['name']}")
+                sign_parts.append(f"products[{i}][price]={product['price']}")
+                sign_parts.append(f"products[{i}][quantity]={product['quantity']}")
+        else:
+            sign_parts.append(f"{key}={value}")
+    
+    sign_string = "&".join(sign_parts)
+    logger.info("payform.sign_string: %s", sign_string)
+    
+    # HMAC-SHA256
+    signature = hmac.new(
+        secret_key.encode("utf-8"),
+        sign_string.encode("utf-8"),
+        hashlib.sha256
+    ).hexdigest()
+    
+    return signature
+
 
 @router.post("/link")
 async def create_payment_link(
     request: Request,
     db: Session = Depends(get_db),
 ) -> JSONResponse:
-    """
-    Create payment link for current user and tariff that was placed in session previously.
-    For simplicity, expect JSON body: { "tariff": "subscription"|"single", "podcast_id": optional }
-    """
+    """Создаем ссылку на оплату"""
     if not request.session.get("telegram_id"):
         raise HTTPException(status_code=401, detail="unauthorized")
 
@@ -153,7 +131,7 @@ async def create_payment_link(
     if not user:
         raise HTTPException(status_code=400, detail="user_not_found")
 
-    # Determine items and price
+    # Определяем товар и цену
     if tariff == "subscription":
         cfg = db.query(models.AppConfig).first()
         price_cents = (cfg.subscription_price_cents if cfg else 0) or 0
@@ -166,7 +144,7 @@ async def create_payment_link(
     else:
         raise HTTPException(status_code=400, detail="bad_tariff")
 
-    # Create pending transaction
+    # Создаем транзакцию
     txn = models.Transaction(
         user_id=user.id,
         type="subscription" if tariff == "subscription" else "single",
@@ -177,12 +155,11 @@ async def create_payment_link(
     db.commit()
     db.refresh(txn)
 
-    # Build Payform payload
+    # Строим данные для платежки
     rub_amount = max(0, price_cents // 100)
-    payload: Dict[str, Any] = {
+    payment_data = {
+        "do": "pay",
         "order_id": f"txn-{txn.id}",
-        "customer_phone": None,  # let customer fill on payform
-        "customer_email": None,
         "products": [
             {
                 "name": name,
@@ -191,56 +168,76 @@ async def create_payment_link(
             }
         ],
         "customer_extra": f"tg:{user.telegram_id}",
-        "do": "pay",
         "urlReturn": settings.webapp_url.rstrip("/") + "/failed",
         "urlSuccess": settings.webapp_url.rstrip("/") + "/success",
         "urlNotification": settings.webapp_url.rstrip("/") + "/api/payments/webhook",
-        # Attach sys only if configured
-        "sys": settings.payform_sys or None,
-        # Request JSON response if supported
-        # "type": "json",
     }
+    
+    # Добавляем sys если настроен
+    if settings.payform_sys:
+        payment_data["sys"] = settings.payform_sys
 
-    # sys is optional for custom integrations
-    link = build_payform_link(payload)
-    try:
-        logger.info(
-            "payform.link.created: user_id=%s telegram_id=%s tariff=%s price_rub=%s order_id=%s",
-            user.id,
-            user.telegram_id,
-            tariff,
-            rub_amount,
-            payload.get("order_id"),
-        )
-    except Exception:
-        pass
+    link = build_payform_link(payment_data)
     return JSONResponse({"ok": True, "link": link, "txn_id": txn.id})
 
 
 @router.post("/webhook")
-async def payform_webhook(request: Request, db: Session = Depends(get_db), sign: str | None = Header(default=None, alias="Sign")):
+async def payform_webhook(
+    request: Request, 
+    db: Session = Depends(get_db), 
+    sign: str | None = Header(default=None, alias="Sign")
+):
+    """Обрабатываем уведомления от Продамуса"""
     try:
         form = await request.form()
-        # form уже плоский (ключи вида products[0][name]); это нормально.
         data = {k: v for k, v in form.items()}
     except Exception:
         raise HTTPException(status_code=400, detail="invalid_form")
 
+    # Проверяем подпись если настроен секрет
     if settings.payform_secret:
         if not sign:
             logger.warning("payform.webhook: signature header missing")
             raise HTTPException(status_code=400, detail="signature_missing")
-
-        # ВАЖНО: считаем тем же способом, что и при формировании ссылки
-        calc = _create_signature(data, settings.payform_secret)
-        if calc != sign:
+        
+        # Считаем подпись
+        calc_signature = create_signature(data, settings.payform_secret)
+        if calc_signature != sign:
             logger.warning(
                 "payform.webhook: signature mismatch order_id=%s provided=%s calculated=%s",
-                data.get("order_id") or data.get("orderId"),
+                data.get("order_id"),
                 sign,
-                calc,
+                calc_signature,
             )
             raise HTTPException(status_code=400, detail="signature_incorrect")
         else:
-            logger.info("payform.webhook: signature ok order_id=%s", data.get("order_id") or data.get("orderId"))
+            logger.info("payform.webhook: signature ok order_id=%s", data.get("order_id"))
 
+    # Обрабатываем заказ
+    order_id = data.get("order_id") or data.get("orderId") or ""
+    status_val = str(data.get("status", "")).lower()
+
+    if not order_id or not order_id.startswith("txn-"):
+        return JSONResponse({"ok": True})
+
+    txn_id_str = order_id.split("-", 1)[1]
+    try:
+        txn_id = int(txn_id_str)
+    except Exception:
+        return JSONResponse({"ok": True})
+
+    txn = db.get(models.Transaction, txn_id)
+    if not txn:
+        return JSONResponse({"ok": True})
+
+    if status_val in {"paid", "success", "succeeded"}:
+        txn.status = "success"
+        if txn.type == "subscription":
+            user = db.get(models.User, txn.user_id)
+            if user:
+                user.has_subscription = True
+    elif status_val in {"failed", "error", "canceled", "cancelled"}:
+        txn.status = "error"
+
+    db.commit()
+    return JSONResponse({"ok": True})
