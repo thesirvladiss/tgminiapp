@@ -147,7 +147,7 @@ async def create_payment_link(
         "urlSuccess": settings.webapp_url.rstrip("/") + "/success",
         "urlNotification": settings.webapp_url.rstrip("/") + "/api/payments/webhook",
         # Attach sys only if configured
-        "sys": settings.payform_sys or None,
+        # "sys": settings.payform_sys or None,
         # Request JSON response if supported
         # "type": "json",
     }
