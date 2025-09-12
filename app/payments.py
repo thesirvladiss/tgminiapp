@@ -165,6 +165,7 @@ async def create_payment_link(
     payment_data = {
         "do": "pay",
         "order_id": f"txn-{txn.id}",
+        "customer_phone": body.get("customer_phone", ""),
         "products": [
             {
                 "name": name,
