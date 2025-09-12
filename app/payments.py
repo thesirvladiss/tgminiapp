@@ -18,11 +18,7 @@ logger = logging.getLogger("app.payments")
 
 def _flatten_for_signature(data: Dict[str, Any], parent_key: str = "") -> List[Tuple[str, Any]]:
     """
-    Prodamus HMAC in PHP typically signs by flattening nested arrays with keys like products[0][name].
-    We will approximate by:
-    - building key paths like parent[child] for dicts and [index] for lists
-    - ignoring None values
-    - sorting by key lexicographically before concatenation
+    Generic flattener (legacy). Kept for reference but not used for Prodamus.
     """
     items: List[Tuple[str, Any]] = []
     for key, value in data.items():
@@ -43,63 +39,119 @@ def _flatten_for_signature(data: Dict[str, Any], parent_key: str = "") -> List[T
     return items
 
 
+def _flatten_prodamus(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
+    """
+    Prodamus PHP Hmac::create expects PHP-style keys. Based on docs examples:
+    - products list is flattened as products[{idx}]name, products[{idx}]price, products[{idx}]quantity
+    - nested dicts under product (e.g. tax) use products[{idx}]tax[tax_type]
+    - other dicts use bracket notation k[child]
+    - None values are skipped
+    - Returns list of (key, value) pairs without URL encoding
+    """
+    pairs: List[Tuple[str, Any]] = []
+
+    def add_pair(k: str, v: Any):
+        if v is None:
+            return
+        pairs.append((k, v))
+
+    for key, value in data.items():
+        if value is None:
+            continue
+        if key == "products" and isinstance(value, list):
+            for idx, item in enumerate(value):
+                if isinstance(item, dict):
+                    for pkey, pval in item.items():
+                        if pval is None:
+                            continue
+                        if isinstance(pval, dict):
+                            # products[{idx}]tax[tax_type]=...
+                            for sk, sv in pval.items():
+                                if sv is None:
+                                    continue
+                                add_pair(f"products[{idx}]{pkey}[{sk}]", sv)
+                        else:
+                            # products[{idx}]name=..., price=..., quantity=...
+                            add_pair(f"products[{idx}]{pkey}", pval)
+                else:
+                    # non-dict product element (unlikely)
+                    add_pair(f"products[{idx}]", item)
+        elif isinstance(value, dict):
+            # generic dict -> k[child]
+            for sk, sv in value.items():
+                if sv is None:
+                    continue
+                if isinstance(sv, dict):
+                    for ssk, ssv in sv.items():
+                        if ssv is None:
+                            continue
+                        add_pair(f"{key}[{sk}][{ssk}]", ssv)
+                elif isinstance(sv, list):
+                    for sidx, sitem in enumerate(sv):
+                        add_pair(f"{key}[{sk}][{sidx}]", sitem)
+                else:
+                    add_pair(f"{key}[{sk}]", sv)
+        elif isinstance(value, list):
+            for idx, item in enumerate(value):
+                add_pair(f"{key}[{idx}]", item)
+        else:
+            add_pair(str(key), value)
+
+    return pairs
+
+
 def _create_signature(payload: Dict[str, Any], secret_key: str) -> str:
-    # Build sorted key=value string with "::" delimiter like many gateways; adjust if docs require different
-    flat = _flatten_for_signature(payload)
+    # Prodamus compatibility: sort by key, join as key=value with '&' like querystring but without URL encoding
+    flat = _flatten_prodamus(payload)
     flat.sort(key=lambda kv: kv[0])
-    sign_src = ";".join(f"{k}={v}" for k, v in flat)
+    sign_src = "&".join(f"{k}={v}" for k, v in flat)
     digest = hmac.new(secret_key.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
     return digest
 
 
 def build_payform_link(data: Dict[str, Any]) -> str:
     base = settings.payform_url.rstrip("/") + "/"
-    # Optionally attach signature if secret configured
     payload = {k: v for k, v in data.items() if v is not None}
+
+    # Signature first, based on Prodamus-style flattened pairs
+    sign_src = ""
+    digest = ""
     if settings.payform_secret:
-        # Build sign src for debug
         try:
-            flat = _flatten_for_signature(payload)
+            flat = _flatten_prodamus(payload)
             flat.sort(key=lambda kv: kv[0])
-            sign_src = ";".join(f"{k}={v}" for k, v in flat)
-        except Exception:
-            sign_src = ""
-        try:
+            sign_src = "&".join(f"{k}={v}" for k, v in flat)
             digest = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
+            payload["signature"] = digest
         except Exception:
-            digest = ""
+            pass
+
+    # Build query string using the same flattened key strategy
+    from urllib.parse import quote_plus
+    pairs = _flatten_prodamus(payload)
+    # include also non-nested top-level fields that were not expanded by flattener
+    top_simple = {k: v for k, v in payload.items() if not isinstance(v, (dict, list)) and not (k.startswith("products["))}
+    for k, v in top_simple.items():
+        pairs.append((k, v))
+    # Deduplicate keeping first occurrence
+    seen = set()
+    qp: List[str] = []
+    for k, v in pairs:
+        key = str(k)
+        if (key, str(v)) in seen:
+            continue
+        seen.add((key, str(v)))
+        qp.append(f"{quote_plus(key)}={quote_plus(str(v))}")
+    query = "&".join(qp)
+    link = f"{base}?{query}" if query else base
+    try:
         logger.info(
-            "payform.sign: base=%s sys=%s order_id=%s sign_src_len=%s signature=%s",
+            "payform.sign: base=%s order_id=%s sign_src_len=%s signature=%s",
             base,
-            payload.get("sys"),
             payload.get("order_id"),
             len(sign_src or ""),
             digest,
         )
-        payload_with_sig = dict(payload)
-        payload_with_sig["signature"] = digest
-        payload = payload_with_sig
-    else:
-        pass
-
-    # Build query string manually handling nested structures
-    def encode(key: str, value: Any, acc: List[str]):
-        from urllib.parse import quote_plus
-        if isinstance(value, dict):
-            for k, v in value.items():
-                encode(f"{key}[{k}]", v, acc)
-        elif isinstance(value, list):
-            for idx, item in enumerate(value):
-                encode(f"{key}[{idx}]", item, acc)
-        else:
-            acc.append(f"{quote_plus(key)}={quote_plus(str(value))}")
-
-    parts: List[str] = []
-    for k, v in payload.items():
-        encode(k, v, parts)
-    query = "&".join(parts)
-    link = f"{base}?{query}" if query else base
-    try:
         logger.info(
             "payform.link: url_base=%s query_len=%s preview=%s",
             base,
@@ -215,11 +267,11 @@ async def payform_webhook(request: Request, db: Session = Depends(get_db), sign:
         if not sign:
             logger.warning("payform.webhook: signature header missing")
             raise HTTPException(status_code=400, detail="signature_missing")
-        # Build sign src for webhook data to compare
+        # Build sign src for webhook data to compare using the same strategy
         try:
-            flat = _flatten_for_signature(data)
+            flat = _flatten_prodamus(data)
             flat.sort(key=lambda kv: kv[0])
-            sign_src = ";".join(f"{k}={v}" for k, v in flat)
+            sign_src = "&".join(f"{k}={v}" for k, v in flat)
         except Exception:
             sign_src = ""
         calc = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
