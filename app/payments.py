@@ -60,7 +60,7 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     for key, value in payload.items():
         if key == "products":
             for i, product in enumerate(value):
-                query_parts.append(f"products[{i}][name]={product['name']}")
+                query_parts.append(f"products[{i}][name]=123")
                 query_parts.append(f"products[{i}][price]={product['price']}")
                 query_parts.append(f"products[{i}][quantity]={product['quantity']}")
         else:
