@@ -57,7 +57,7 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     for key, value in payload.items():
         if key == "products":
             for i, product in enumerate(value):
-                query_parts.append(f"products[{i}][name]=Подкаст")
+                query_parts.append(f"products[{i}][name]={product['name']}")
                 query_parts.append(f"products[{i}][price]={product['price']}")
                 query_parts.append(f"products[{i}][quantity]={product['quantity']}")
         else:
@@ -86,7 +86,7 @@ def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
     for key, value in sign_data.items():
         if key == "products":
             for i, product in enumerate(value):
-                flat_data[f"products[{i}][name]"] = 'Подкаст'
+                flat_data[f"products[{i}][name]"] = product['name']
                 flat_data[f"products[{i}][price]"] = product['price']
                 flat_data[f"products[{i}][quantity]"] = product['quantity']
         else:
@@ -143,7 +143,7 @@ async def create_payment_link(
         pp = db.query(models.PodcastPrice).filter(models.PodcastPrice.podcast_id == int(podcast_id)).first()
         podcast = db.get(models.Podcast, int(podcast_id))
         price_cents = (pp.price_cents if pp else 0) or 0
-        name = f"Подкаст"
+        name = f"Подкаст:{podcast.title if podcast else podcast_id}".replace(" ", "_")
         logger.info("payform.name: %s", name)
     else:
         raise HTTPException(status_code=400, detail="bad_tariff")
@@ -166,7 +166,7 @@ async def create_payment_link(
         "order_id": f"txn-{txn.id}",
         "products": [
             {
-                "name": 'Подкаст',
+                "name": name,
                 "price": rub_amount,
                 "quantity": 1,
             }
