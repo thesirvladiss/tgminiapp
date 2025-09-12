@@ -100,6 +100,62 @@ def _flatten_prodamus(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
     return pairs
 
 
+def _flatten_prodamus_php_style(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
+    """
+    PHP-style flattener: products[0]name (not products[0][name])
+    """
+    pairs: List[Tuple[str, Any]] = []
+
+    def add_pair(k: str, v: Any):
+        if v is None:
+            return
+        pairs.append((k, v))
+
+    for key, value in data.items():
+        if value is None:
+            continue
+        if key == "products" and isinstance(value, list):
+            for idx, item in enumerate(value):
+                if isinstance(item, dict):
+                    for pkey, pval in item.items():
+                        if pval is None:
+                            continue
+                        if isinstance(pval, dict):
+                            # products[{idx}]tax[tax_type]=...
+                            for sk, sv in pval.items():
+                                if sv is None:
+                                    continue
+                                add_pair(f"products[{idx}]{pkey}[{sk}]", sv)
+                        else:
+                            # products[{idx}]name=..., price=..., quantity=... (PHP style)
+                            add_pair(f"products[{idx}]{pkey}", pval)
+                else:
+                    # non-dict product element (unlikely)
+                    add_pair(f"products[{idx}]", item)
+        elif isinstance(value, dict):
+            # generic dict -> k[child]
+            for sk, sv in value.items():
+                if sv is None:
+                    continue
+                if isinstance(sv, dict):
+                    for ssk, ssv in sv.items():
+                        if ssv is None:
+                            continue
+                        add_pair(f"{key}[{sk}][{ssk}]", ssv)
+                elif isinstance(sv, list):
+                    for sidx, sitem in enumerate(sv):
+                        add_pair(f"{key}[{sk}][{sidx}]", sitem)
+                else:
+                    add_pair(f"{key}[{sk}]", sv)
+        elif isinstance(value, list):
+            for idx, item in enumerate(value):
+                add_pair(f"{key}[{idx}]", item)
+        else:
+            add_pair(str(key), value)
+
+    return pairs
+
+
 def _create_signature(payload: Dict[str, Any], secret_key: str) -> str:
     # Prodamus compatibility: sort by key, join as key=value with '&' like querystring but without URL encoding
     flat = _flatten_prodamus(payload)
@@ -120,10 +176,10 @@ def build_payform_link(data: Dict[str, Any]) -> str:
         try:
             # Exclude URL routing params from signature (often not included by provider)
             sign_payload = {k: v for k, v in payload.items() if k not in {"urlReturn", "urlSuccess", "urlNotification", "signature"}}
-            flat_for_sign = _flatten_prodamus(sign_payload)
-            # Build sign source EXACTLY like http_build_query (URL-encoded, same order)
-            from urllib.parse import quote_plus
-            sign_src = "&".join(f"{quote_plus(str(k))}={quote_plus(str(v))}" for k, v in flat_for_sign)
+            # Use PHP-style keys: products[0]name (not products[0][name])
+            flat_for_sign = _flatten_prodamus_php_style(sign_payload)
+            # Build sign source with raw values (no URL encoding)
+            sign_src = "&".join(f"{k}={v}" for k, v in flat_for_sign)
             digest = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
             payload["signature"] = digest
             try:
