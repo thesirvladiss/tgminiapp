@@ -69,65 +69,9 @@ def _flatten_prodamus(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
                             for sk, sv in pval.items():
                                 if sv is None:
                                     continue
-                                add_pair(f"products[{idx}][{pkey}][{sk}]", sv)
-                        else:
-                            # products[{idx}]name=..., price=..., quantity=...
-                            add_pair(f"products[{idx}][{pkey}]", pval)
-                else:
-                    # non-dict product element (unlikely)
-                    add_pair(f"products[{idx}]", item)
-        elif isinstance(value, dict):
-            # generic dict -> k[child]
-            for sk, sv in value.items():
-                if sv is None:
-                    continue
-                if isinstance(sv, dict):
-                    for ssk, ssv in sv.items():
-                        if ssv is None:
-                            continue
-                        add_pair(f"{key}[{sk}][{ssk}]", ssv)
-                elif isinstance(sv, list):
-                    for sidx, sitem in enumerate(sv):
-                        add_pair(f"{key}[{sk}][{sidx}]", sitem)
-                else:
-                    add_pair(f"{key}[{sk}]", sv)
-        elif isinstance(value, list):
-            for idx, item in enumerate(value):
-                add_pair(f"{key}[{idx}]", item)
-        else:
-            add_pair(str(key), value)
-
-    return pairs
-
-
-def _flatten_prodamus_php_style(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
-    """
-    PHP-style flattener: products[0]name (not products[0][name])
-    """
-    pairs: List[Tuple[str, Any]] = []
-
-    def add_pair(k: str, v: Any):
-        if v is None:
-            return
-        pairs.append((k, v))
-
-    for key, value in data.items():
-        if value is None:
-            continue
-        if key == "products" and isinstance(value, list):
-            for idx, item in enumerate(value):
-                if isinstance(item, dict):
-                    for pkey, pval in item.items():
-                        if pval is None:
-                            continue
-                        if isinstance(pval, dict):
-                            # products[{idx}]tax[tax_type]=...
-                            for sk, sv in pval.items():
-                                if sv is None:
-                                    continue
                                 add_pair(f"products[{idx}]{pkey}[{sk}]", sv)
                         else:
-                            # products[{idx}]name=..., price=..., quantity=... (PHP style)
+                            # products[{idx}]name=..., price=..., quantity=...
                             add_pair(f"products[{idx}]{pkey}", pval)
                 else:
                     # non-dict product element (unlikely)
@@ -157,64 +101,39 @@ def _flatten_prodamus_php_style(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
 
 
 def _create_signature(payload: Dict[str, Any], secret_key: str) -> str:
-    # Prodamus compatibility: sort by key, join as key=value with '&' like querystring but without URL encoding
-    flat = _flatten_prodamus(payload)
+    # 1) Берём все поля, кроме signature
+    data = {k: v for k, v in payload.items() if k != "signature" and v is not None}
+    # 2) Плосим PHP-стилем (products[0][name], ...)
+    flat = _flatten_prodamus(data)
+    # 3) Сортируем по ключу
     flat.sort(key=lambda kv: kv[0])
+    # 4) Склеиваем БЕЗ url-энкодинга
     sign_src = "&".join(f"{k}={v}" for k, v in flat)
-    digest = hmac.new(secret_key.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
-    return digest
+    # 5) HMAC-SHA256 в hex
+    return hmac.new(secret_key.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
 def build_payform_link(data: Dict[str, Any]) -> str:
     base = settings.payform_url.rstrip("/") + "/"
     payload = {k: v for k, v in data.items() if v is not None}
 
-    # Signature first: raw flattened pairs (without URL encoding), keys like products[0]name
-    sign_src = ""
-    digest = ""
+    # СЧИТАЕМ подпись по тем же правилам, что и у вебхука/доки
     if settings.payform_secret:
-        try:
-            # Exclude URL routing params from signature (often not included by provider)
-            sign_payload = {k: v for k, v in payload.items() if k not in {"urlReturn", "urlSuccess", "urlNotification", "signature"}}
-            # Use PHP-style keys: products[0]name (not products[0][name])
-            flat_for_sign = _flatten_prodamus_php_style(sign_payload)
-            # Build sign source with raw values (no URL encoding)
-            sign_src = "&".join(f"{k}={v}" for k, v in flat_for_sign)
-            digest = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
-            payload["signature"] = digest
-            try:
-                logger.info("payform.sign.keys: %s", [k for k, _ in flat_for_sign])
-            except Exception:
-                pass
-        except Exception:
-            pass
+        digest = _create_signature(payload, settings.payform_secret)
+        payload["signature"] = digest
 
-    # Now build final query including signature using same flattened keys but URL-encoded
+    # Собираем финальный query уже с url-энкодингом (это ок — подпись считали до энкодинга)
     from urllib.parse import quote_plus
     flat_pairs = _flatten_prodamus(payload)
-    query_parts: List[str] = []
-    for k, v in flat_pairs:
-        query_parts.append(f"{quote_plus(str(k))}={quote_plus(str(v))}")
-    query = "&".join(query_parts)
+    query = "&".join(f"{quote_plus(str(k))}={quote_plus(str(v))}" for k, v in flat_pairs)
     link = f"{base}?{query}" if query else base
+
     try:
-        logger.info(
-            "payform.sign: base=%s order_id=%s sign_src_len=%s signature=%s",
-            base,
-            payload.get("order_id"),
-            len(sign_src or ""),
-            digest,
-        )
-        logger.info(
-            "payform.link: url_base=%s query_len=%s preview=%s",
-            base,
-            len(query),
-            (link[:512] + ("..." if len(link) > 512 else "")),
-        )
+        logger.info("payform.sign: base=%s order_id=%s signature=%s", base, payload.get("order_id"), payload.get("signature"))
+        logger.info("payform.link: preview=%s", (link[:512] + ("..." if len(link) > 512 else "")))
     except Exception:
         pass
     return link
-
 
 @router.post("/link")
 async def create_payment_link(
@@ -306,12 +225,9 @@ async def create_payment_link(
 
 @router.post("/webhook")
 async def payform_webhook(request: Request, db: Session = Depends(get_db), sign: str | None = Header(default=None, alias="Sign")):
-    """
-    Handle Payform notification. If HMAC secret configured, verify signature using the same
-    flattening strategy as for link creation. Expect form-encoded POST.
-    """
     try:
         form = await request.form()
+        # form уже плоский (ключи вида products[0][name]); это нормально.
         data = {k: v for k, v in form.items()}
     except Exception:
         raise HTTPException(status_code=400, detail="invalid_form")
@@ -320,53 +236,17 @@ async def payform_webhook(request: Request, db: Session = Depends(get_db), sign:
         if not sign:
             logger.warning("payform.webhook: signature header missing")
             raise HTTPException(status_code=400, detail="signature_missing")
-        # Build sign src for webhook data to compare using the same strategy
-        try:
-            flat = _flatten_prodamus(data)
-            flat.sort(key=lambda kv: kv[0])
-            sign_src = "&".join(f"{k}={v}" for k, v in flat)
-        except Exception:
-            sign_src = ""
-        calc = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
+
+        # ВАЖНО: считаем тем же способом, что и при формировании ссылки
+        calc = _create_signature(data, settings.payform_secret)
         if calc != sign:
             logger.warning(
-                "payform.webhook: signature mismatch order_id=%s provided=%s calculated=%s sign_src_len=%s",
+                "payform.webhook: signature mismatch order_id=%s provided=%s calculated=%s",
                 data.get("order_id") or data.get("orderId"),
                 sign,
                 calc,
-                len(sign_src or ""),
             )
             raise HTTPException(status_code=400, detail="signature_incorrect")
         else:
             logger.info("payform.webhook: signature ok order_id=%s", data.get("order_id") or data.get("orderId"))
-
-    order_id = data.get("order_id") or data.get("orderId") or ""
-    status_val = str(data.get("status", "")).lower()
-
-    if not order_id or not order_id.startswith("txn-"):
-        # Not our order
-        return JSONResponse({"ok": True})
-
-    txn_id_str = order_id.split("-", 1)[1]
-    try:
-        txn_id = int(txn_id_str)
-    except Exception:
-        return JSONResponse({"ok": True})
-
-    txn = db.get(models.Transaction, txn_id)
-    if not txn:
-        return JSONResponse({"ok": True})
-
-    if status_val in {"paid", "success", "succeeded"}:
-        txn.status = "success"
-        if txn.type == "subscription":
-            user = db.get(models.User, txn.user_id)
-            if user:
-                user.has_subscription = True
-    elif status_val in {"failed", "error", "canceled", "cancelled"}:
-        txn.status = "error"
-
-    db.commit()
-    return JSONResponse({"ok": True})
-
 
