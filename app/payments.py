@@ -143,7 +143,8 @@ async def create_payment_link(
         pp = db.query(models.PodcastPrice).filter(models.PodcastPrice.podcast_id == int(podcast_id)).first()
         podcast = db.get(models.Podcast, int(podcast_id))
         price_cents = (pp.price_cents if pp else 0) or 0
-        name = f"Подкаст: {podcast.title if podcast else podcast_id}".replace(" ", "_")
+        name = f"Подкаст:{podcast.title if podcast else podcast_id}".replace(" ", "_")
+        logger.info("payform.name: %s", name)
     else:
         raise HTTPException(status_code=400, detail="bad_tariff")
 
