@@ -92,6 +92,42 @@
           });
         });
       }
+
+      // Intercept checkout to open payment link in external browser
+      (function () {
+        const form = document.querySelector('.subscription-btn form');
+        if (!form) return;
+        form.addEventListener('submit', async (e) => {
+          try {
+            e.preventDefault();
+          } catch (_) { }
+          try {
+            const fd = new FormData(form);
+            const tariff = (fd.get('tariff') || '').toString();
+            const pidRaw = fd.get('podcast_id');
+            const podcast_id = (pidRaw === null || pidRaw === '') ? null : Number(pidRaw);
+            const resp = await fetch('/api/payments/link', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tariff, podcast_id })
+            });
+            const data = await resp.json().catch(() => null);
+            const link = data && data.ok && data.link ? data.link : null;
+            if (link) {
+              try {
+                if (window.Telegram && window.Telegram.WebApp) {
+                  window.Telegram.WebApp.openLink(link, { try_instant_view: false });
+                  return;
+                }
+              } catch (_) { }
+              try { window.open(link, '_blank', 'noopener'); } catch (_) { window.location.href = link; }
+              return;
+            }
+          } catch (_) { }
+          // Fallback to native form submit if API failed
+          try { form.submit(); } catch (_) { }
+        });
+      })();
     </script>
   </body>
 </html>

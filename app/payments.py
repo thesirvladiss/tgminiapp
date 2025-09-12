@@ -57,9 +57,30 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     # Optionally attach signature if secret configured
     payload = {k: v for k, v in data.items() if v is not None}
     if settings.payform_secret:
+        # Build sign src for debug
+        try:
+            flat = _flatten_for_signature(payload)
+            flat.sort(key=lambda kv: kv[0])
+            sign_src = ";".join(f"{k}={v}" for k, v in flat)
+        except Exception:
+            sign_src = ""
+        try:
+            digest = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
+        except Exception:
+            digest = ""
+        logger.info(
+            "payform.sign: base=%s sys=%s order_id=%s sign_src_len=%s signature=%s",
+            base,
+            payload.get("sys"),
+            payload.get("order_id"),
+            len(sign_src or ""),
+            digest,
+        )
         payload_with_sig = dict(payload)
-        payload_with_sig["signature"] = _create_signature(payload, settings.payform_secret)
+        payload_with_sig["signature"] = digest
         payload = payload_with_sig
+    else:
+        pass
 
     # Build query string manually handling nested structures
     def encode(key: str, value: Any, acc: List[str]):
@@ -77,7 +98,17 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     for k, v in payload.items():
         encode(k, v, parts)
     query = "&".join(parts)
-    return f"{base}?{query}" if query else base
+    link = f"{base}?{query}" if query else base
+    try:
+        logger.info(
+            "payform.link: url_base=%s query_len=%s preview=%s",
+            base,
+            len(query),
+            (link[:512] + ("..." if len(link) > 512 else "")),
+        )
+    except Exception:
+        pass
+    return link
 
 
 @router.post("/link")
@@ -147,12 +178,24 @@ async def create_payment_link(
         "urlSuccess": settings.webapp_url.rstrip("/") + "/success",
         "urlNotification": settings.webapp_url.rstrip("/") + "/api/payments/webhook",
         # Attach sys only if configured
-        # "sys": settings.payform_sys or None,
+        "sys": settings.payform_sys or None,
         # Request JSON response if supported
         # "type": "json",
     }
 
+    # sys is optional for custom integrations
     link = build_payform_link(payload)
+    try:
+        logger.info(
+            "payform.link.created: user_id=%s telegram_id=%s tariff=%s price_rub=%s order_id=%s",
+            user.id,
+            user.telegram_id,
+            tariff,
+            rub_amount,
+            payload.get("order_id"),
+        )
+    except Exception:
+        pass
     return JSONResponse({"ok": True, "link": link, "txn_id": txn.id})
 
 
@@ -170,10 +213,27 @@ async def payform_webhook(request: Request, db: Session = Depends(get_db), sign:
 
     if settings.payform_secret:
         if not sign:
+            logger.warning("payform.webhook: signature header missing")
             raise HTTPException(status_code=400, detail="signature_missing")
-        calc = _create_signature(data, settings.payform_secret)
+        # Build sign src for webhook data to compare
+        try:
+            flat = _flatten_for_signature(data)
+            flat.sort(key=lambda kv: kv[0])
+            sign_src = ";".join(f"{k}={v}" for k, v in flat)
+        except Exception:
+            sign_src = ""
+        calc = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
         if calc != sign:
+            logger.warning(
+                "payform.webhook: signature mismatch order_id=%s provided=%s calculated=%s sign_src_len=%s",
+                data.get("order_id") or data.get("orderId"),
+                sign,
+                calc,
+                len(sign_src or ""),
+            )
             raise HTTPException(status_code=400, detail="signature_incorrect")
+        else:
+            logger.info("payform.webhook: signature ok order_id=%s", data.get("order_id") or data.get("orderId"))
 
     order_id = data.get("order_id") or data.get("orderId") or ""
     status_val = str(data.get("status", "")).lower()
