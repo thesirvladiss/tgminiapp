@@ -33,6 +33,7 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     # Добавляем опциональные параметры если есть
     if data.get("customer_phone"):
         payload["customer_phone"] = data["customer_phone"]
+        logger.info("payform.customer_phone: %s", data["customer_phone"])
     if data.get("customer_email"):
         payload["customer_email"] = data["customer_email"]
     if data.get("customer_extra"):

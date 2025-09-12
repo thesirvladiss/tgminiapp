@@ -339,6 +339,7 @@ def create_app() -> FastAPI:
         db.refresh(txn)
 
         rub_amount = max(0, price_cents // 100)
+        logger.info("checkout.customer_phone: %s", customer_phone)
         payload = {
             "order_id": f"txn-{txn.id}",
             "customer_phone": customer_phone,
