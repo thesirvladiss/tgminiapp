@@ -52,20 +52,21 @@ def build_payform_link(data: Dict[str, Any]) -> str:
         payload["signature"] = signature
         logger.info("payform.signature: %s", signature)
     
-    # Создаем плоский словарь для urlencode (как в PHP http_build_query)
-    flat_data = {}
+    # Строим query string
+    from urllib.parse import urlencode
+    query_parts = []
+    
+    # Обрабатываем products отдельно (нужны скобки)
     for key, value in payload.items():
         if key == "products":
             for i, product in enumerate(value):
-                flat_data[f"products[{i}][name]"] = product['name']
-                flat_data[f"products[{i}][price]"] = product['price']
-                flat_data[f"products[{i}][quantity]"] = product['quantity']
+                query_parts.append(f"products[{i}][name]={product['name']}")
+                query_parts.append(f"products[{i}][price]={product['price']}")
+                query_parts.append(f"products[{i}][quantity]={product['quantity']}")
         else:
-            flat_data[key] = value
+            query_parts.append(f"{key}={value}")
     
-    # Используем urlencode для правильного кодирования
-    from urllib.parse import urlencode
-    query = urlencode(flat_data, doseq=True)
+    query = "&".join(query_parts)
     link = f"{base}?{query}"
     
     logger.info("payform.link: %s", link)
@@ -167,7 +168,7 @@ async def create_payment_link(
         "order_id": f"txn-{txn.id}",
         "products": [
             {
-                "name": name.replace(" ", "_"),  # Убираем пробелы
+                "name": name,
                 "price": rub_amount,
                 "quantity": 1,
             }
