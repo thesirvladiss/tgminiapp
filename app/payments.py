@@ -168,7 +168,7 @@ async def create_payment_link(
         "order_id": f"txn-{txn.id}",
         "products": [
             {
-                "name": name,
+                "name": name.replace(" ", "_"),  # Убираем пробелы
                 "price": rub_amount,
                 "quantity": 1,
             }

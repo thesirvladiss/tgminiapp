@@ -14,7 +14,7 @@ class Settings(BaseModel):
     webapp_url: str = os.getenv("WEBAPP_URL", "http://127.0.0.1:8000/")
     # Payform (Prodamus) settings
     payform_url: str = os.getenv("PAYFORM_URL", "https://demo.payform.ru/")
-    payform_secret: str = os.getenv("PAYFORM_SECRET", "")
+    payform_secret: str = os.getenv("PAYFORM_SECRET", "2y2aw4oknnke80bp1a8fniwuuq7tdkwmmuq7vwi4nzbr8z1182ftbn6p8mhw3bhz")
     payform_sys: str = os.getenv("PAYFORM_SYS", "")
 
 
