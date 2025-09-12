@@ -83,6 +83,9 @@ def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
     # Исключаем signature из подписи
     sign_data = {k: v for k, v in payload.items() if k != "signature"}
     
+    # Логируем что именно подписываем
+    logger.info("payform.sign.keys: %s", list(sign_data.keys()))
+    
     # Сортируем по ключу
     sorted_keys = sorted(sign_data.keys())
     
