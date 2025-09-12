@@ -67,6 +67,15 @@
               id="tariff"
               value="{% if podcast_id %}single{% else %}subscription{% endif %}"
             />
+            <div style="margin-bottom: 15px;">
+              <input
+                type="tel"
+                name="customer_phone"
+                placeholder="+7 (999) 123-45-67"
+                required
+                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;"
+              />
+            </div>
             <button class="btn-orange" type="submit">перейти к оплате</button>
           </form>
         </div>

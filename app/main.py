@@ -296,6 +296,7 @@ def create_app() -> FastAPI:
         db: Session = Depends(get_db),
         tariff: str = Form(...),  # 'subscription' or 'single'
         podcast_id: int | None = Form(None),
+        customer_phone: str = Form(...),  # номер телефона
     ):
         if not request.session.get("telegram_id"):
             logging.getLogger(ACCESS_LOGGER_NAME).info(
@@ -340,6 +341,7 @@ def create_app() -> FastAPI:
         rub_amount = max(0, price_cents // 100)
         payload = {
             "order_id": f"txn-{txn.id}",
+            "customer_phone": customer_phone,
             "products": [
                 {"name": item_name, "price": rub_amount, "quantity": 1},
             ],
