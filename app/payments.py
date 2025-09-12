@@ -31,6 +31,8 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     }
     
     # Добавляем опциональные параметры если есть
+    if data.get("order_sum"):
+        payload["order_sum"] = data["order_sum"]
     if data.get("customer_phone"):
         payload["customer_phone"] = data["customer_phone"]
     if data.get("customer_email"):
