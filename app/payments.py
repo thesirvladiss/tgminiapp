@@ -162,11 +162,11 @@ async def create_payment_link(
     payment_data = {
         "do": "pay",
         "order_id": f"txn-{txn.id}",
-        "order_sum": rub_amount,  # Сумма заказа
+        "order_sum": 1000,  # Сумма заказа
         "products": [
             {
                 "name": name,
-                "price": rub_amount,
+                "price": 1000,
                 "quantity": 1,
             }
         ],
