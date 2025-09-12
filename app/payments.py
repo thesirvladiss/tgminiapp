@@ -171,6 +171,10 @@ async def create_payment_link(
         "urlReturn": settings.webapp_url.rstrip("/") + "/failed",
         "urlSuccess": settings.webapp_url.rstrip("/") + "/success",
         "urlNotification": settings.webapp_url.rstrip("/") + "/api/payments/webhook",
+        # Дополнительные параметры для корректной работы
+        "currency": "rub",  # Валюта платежа
+        "type": "json",     # Ответ в JSON формате
+        "callbackType": "json",  # Webhook в JSON формате
     }
     
     # Добавляем sys если настроен
@@ -188,11 +192,17 @@ async def payform_webhook(
     sign: str | None = Header(default=None, alias="Sign")
 ):
     """Обрабатываем уведомления от Продамуса"""
+    # Пробуем получить JSON, если не получается - form data
     try:
-        form = await request.form()
-        data = {k: v for k, v in form.items()}
+        data = await request.json()
+        logger.info("payform.webhook: received JSON data: %s", data)
     except Exception:
-        raise HTTPException(status_code=400, detail="invalid_form")
+        try:
+            form = await request.form()
+            data = {k: v for k, v in form.items()}
+            logger.info("payform.webhook: received form data: %s", data)
+        except Exception:
+            raise HTTPException(status_code=400, detail="invalid_data")
 
     # Проверяем подпись если настроен секрет
     if settings.payform_secret:
