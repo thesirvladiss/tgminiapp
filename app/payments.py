@@ -54,14 +54,25 @@ def build_payform_link(data: Dict[str, Any]) -> str:
         logger.info("payform.signature: %s", signature)
     
     # Строим query string (простой способ без URL-кодирования)
+    # Сначала добавляем параметры в правильном порядке
     query_parts = []
+    
+    # Добавляем параметры в нужном порядке
+    if "order_id" in payload:
+        query_parts.append(f"order_id={payload['order_id']}")
+    if "customer_phone" in payload:
+        query_parts.append(f"customer_phone={payload['customer_phone']}")
+    
+    # Затем products
+    if "products" in payload:
+        for i, product in enumerate(payload["products"]):
+            query_parts.append(f"products[{i}][price]={product['price']}")
+            query_parts.append(f"products[{i}][quantity]={product['quantity']}")
+            query_parts.append(f"products[{i}][name]={product['name']}")
+    
+    # Остальные параметры
     for key, value in payload.items():
-        if key == "products":
-            for i, product in enumerate(value):
-                query_parts.append(f"products[{i}][price]={product['price']}")
-                query_parts.append(f"products[{i}][quantity]={product['quantity']}")
-                query_parts.append(f"products[{i}][name]={product['name']}")
-        else:
+        if key not in ["order_id", "customer_phone", "products"]:
             query_parts.append(f"{key}={value}")
     
     query = "&".join(query_parts)
@@ -84,13 +95,23 @@ def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
     
     # Создаем плоский словарь для точного соответствия PHP http_build_query
     flat_data = {}
+    
+    # Добавляем параметры в правильном порядке
+    if "order_id" in sign_data:
+        flat_data["order_id"] = sign_data["order_id"]
+    if "customer_phone" in sign_data:
+        flat_data["customer_phone"] = sign_data["customer_phone"]
+    
+    # Затем products
+    if "products" in sign_data:
+        for i, product in enumerate(sign_data["products"]):
+            flat_data[f"products[{i}][price]"] = product['price']
+            flat_data[f"products[{i}][quantity]"] = product['quantity']
+            flat_data[f"products[{i}][name]"] = product['name']
+    
+    # Остальные параметры
     for key, value in sign_data.items():
-        if key == "products":
-            for i, product in enumerate(value):
-                flat_data[f"products[{i}][price]"] = product['price']
-                flat_data[f"products[{i}][quantity]"] = product['quantity']
-                flat_data[f"products[{i}][name]"] = product['name']
-        else:
+        if key not in ["order_id", "customer_phone", "products"]:
             flat_data[key] = value
     
     # Сортируем ключи (как делает PHP)
