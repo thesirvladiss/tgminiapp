@@ -31,8 +31,6 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     }
     
     # Добавляем опциональные параметры если есть
-    if data.get("order_sum"):
-        payload["order_sum"] = data["order_sum"]
     if data.get("customer_phone"):
         payload["customer_phone"] = data["customer_phone"]
     if data.get("customer_email"):
@@ -77,8 +75,8 @@ def build_payform_link(data: Dict[str, Any]) -> str:
 
 def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
     """
-    Создаем подпись по документации Продамуса.
-    Сортируем параметры по ключу, исключаем signature, склеиваем через &
+    Создаем подпись точно как в PHP примере.
+    Используем http_build_query логику для формирования строки подписи.
     """
     # Исключаем signature из подписи
     sign_data = {k: v for k, v in payload.items() if k != "signature"}
@@ -86,21 +84,24 @@ def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
     # Логируем что именно подписываем
     logger.info("payform.sign.keys: %s", list(sign_data.keys()))
     
-    # Сортируем по ключу
-    sorted_keys = sorted(sign_data.keys())
-    
-    # Собираем строку для подписи
-    sign_parts = []
-    for key in sorted_keys:
-        value = sign_data[key]
+    # Создаем плоский словарь для точного соответствия PHP http_build_query
+    flat_data = {}
+    for key, value in sign_data.items():
         if key == "products":
-            # Обрабатываем products отдельно
             for i, product in enumerate(value):
-                sign_parts.append(f"products[{i}][name]={product['name']}")
-                sign_parts.append(f"products[{i}][price]={product['price']}")
-                sign_parts.append(f"products[{i}][quantity]={product['quantity']}")
+                flat_data[f"products[{i}][name]"] = product['name']
+                flat_data[f"products[{i}][price]"] = product['price']
+                flat_data[f"products[{i}][quantity]"] = product['quantity']
         else:
-            sign_parts.append(f"{key}={value}")
+            flat_data[key] = value
+    
+    # Сортируем ключи (как делает PHP)
+    sorted_items = sorted(flat_data.items())
+    
+    # Создаем строку подписи (БЕЗ URL-кодирования, как в PHP)
+    sign_parts = []
+    for key, value in sorted_items:
+        sign_parts.append(f"{key}={value}")
     
     sign_string = "&".join(sign_parts)
     logger.info("payform.sign_string: %s", sign_string)
@@ -160,16 +161,15 @@ async def create_payment_link(
     db.commit()
     db.refresh(txn)
 
-    # Строим данные для платежки
+    # Строим данные для платежки (как в PHP примере)
     rub_amount = max(0, price_cents // 100)
     payment_data = {
         "do": "pay",
         "order_id": f"txn-{txn.id}",
-        "order_sum": 1000,  # Сумма заказа
         "products": [
             {
                 "name": name,
-                "price": 1000,
+                "price": rub_amount,
                 "quantity": 1,
             }
         ],
@@ -177,10 +177,6 @@ async def create_payment_link(
         "urlReturn": settings.webapp_url.rstrip("/") + "/failed",
         "urlSuccess": settings.webapp_url.rstrip("/") + "/success",
         "urlNotification": settings.webapp_url.rstrip("/") + "/api/payments/webhook",
-        # Дополнительные параметры для корректной работы
-        "currency": "rub",  # Валюта платежа
-        "type": "json",     # Ответ в JSON формате
-        "callbackType": "json",  # Webhook в JSON формате
     }
     
     # Добавляем sys если настроен
