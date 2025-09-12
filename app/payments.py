@@ -86,7 +86,7 @@ def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
     for key, value in sign_data.items():
         if key == "products":
             for i, product in enumerate(value):
-                flat_data[f"products[{i}][name]"] = product['name']
+                flat_data[f"products[{i}][name]"] = 'Подкаст'
                 flat_data[f"products[{i}][price]"] = product['price']
                 flat_data[f"products[{i}][quantity]"] = product['quantity']
         else:
