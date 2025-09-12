@@ -57,9 +57,9 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     for key, value in payload.items():
         if key == "products":
             for i, product in enumerate(value):
-                query_parts.append(f"products[{i}][name]={product['name']}")
                 query_parts.append(f"products[{i}][price]={product['price']}")
                 query_parts.append(f"products[{i}][quantity]={product['quantity']}")
+                query_parts.append(f"products[{i}][name]={product['name']}")
         else:
             query_parts.append(f"{key}={value}")
     
@@ -86,9 +86,9 @@ def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
     for key, value in sign_data.items():
         if key == "products":
             for i, product in enumerate(value):
-                flat_data[f"products[{i}][name]"] = product['name']
                 flat_data[f"products[{i}][price]"] = product['price']
                 flat_data[f"products[{i}][quantity]"] = product['quantity']
+                flat_data[f"products[{i}][name]"] = product['name']
         else:
             flat_data[key] = value
     
