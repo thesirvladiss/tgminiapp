@@ -113,36 +113,38 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     base = settings.payform_url.rstrip("/") + "/"
     payload = {k: v for k, v in data.items() if v is not None}
 
-    # Signature first, based on Prodamus-style flattened pairs
+    # Helper: PHP-like encoder preserving insertion order and bracketed keys
+    from urllib.parse import quote_plus
+    def encode_pairs(obj: Any, prefix: str | None = None, acc: List[str] | None = None) -> List[str]:
+        if acc is None:
+            acc = []
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                key = f"{prefix}[{k}]" if prefix else str(k)
+                encode_pairs(v, key, acc)
+        elif isinstance(obj, list):
+            for idx, item in enumerate(obj):
+                key = f"{prefix}[{idx}]" if prefix else str(idx)
+                encode_pairs(item, key, acc)
+        else:
+            if obj is None:
+                return acc
+            acc.append(f"{quote_plus(prefix or '')}={quote_plus(str(obj))}")
+        return acc
+
+    # Signature first: build query of payload WITHOUT signature using same encoder
     sign_src = ""
     digest = ""
     if settings.payform_secret:
         try:
-            flat = _flatten_prodamus(payload)
-            flat.sort(key=lambda kv: kv[0])
-            sign_src = "&".join(f"{k}={v}" for k, v in flat)
+            sign_src = "&".join(encode_pairs(payload))
             digest = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
             payload["signature"] = digest
         except Exception:
             pass
 
-    # Build query string using the same flattened key strategy
-    from urllib.parse import quote_plus
-    pairs = _flatten_prodamus(payload)
-    # include also non-nested top-level fields that were not expanded by flattener
-    top_simple = {k: v for k, v in payload.items() if not isinstance(v, (dict, list)) and not (k.startswith("products["))}
-    for k, v in top_simple.items():
-        pairs.append((k, v))
-    # Deduplicate keeping first occurrence
-    seen = set()
-    qp: List[str] = []
-    for k, v in pairs:
-        key = str(k)
-        if (key, str(v)) in seen:
-            continue
-        seen.add((key, str(v)))
-        qp.append(f"{quote_plus(key)}={quote_plus(str(v))}")
-    query = "&".join(qp)
+    # Now build final query including signature
+    query = "&".join(encode_pairs(payload))
     link = f"{base}?{query}" if query else base
     try:
         logger.info(
