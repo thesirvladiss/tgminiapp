@@ -118,21 +118,32 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     base = settings.payform_url.rstrip("/") + "/"
     payload = {k: v for k, v in data.items() if v is not None}
 
-    # СЧИТАЕМ подпись по тем же правилам, что и у вебхука/доки
+    # МИНИМУМ: только обязательные поля для подписи
     if settings.payform_secret:
-        # Логируем что именно подписываем (включаем все параметры)
-        data_for_sign = {k: v for k, v in payload.items() if k != "signature" and v is not None}
-        flat_for_sign = _flatten_prodamus(data_for_sign)
-        flat_for_sign.sort(key=lambda kv: kv[0])
-        # Попробуем с URL-кодированием (как в итоговой ссылке)
-        from urllib.parse import quote_plus
-        sign_src = "&".join(f"{quote_plus(str(k))}={quote_plus(str(v))}" for k, v in flat_for_sign)
+        # Только основные поля без URL-параметров
+        min_payload = {
+            "do": payload.get("do"),
+            "order_id": payload.get("order_id"),
+            "products": payload.get("products")
+        }
         
-        logger.info("payform.sign.keys: %s", [k for k, v in flat_for_sign])
-        logger.info("payform.sign.src: %s", sign_src)
+        # Простые ключи без скобок
+        sign_parts = []
+        sign_parts.append(f"do={min_payload['do']}")
+        sign_parts.append(f"order_id={min_payload['order_id']}")
         
-        digest = _create_signature(payload, settings.payform_secret)
+        # Продукты в простом формате
+        for i, product in enumerate(min_payload['products']):
+            sign_parts.append(f"products[{i}][name]={product['name']}")
+            sign_parts.append(f"products[{i}][price]={product['price']}")
+            sign_parts.append(f"products[{i}][quantity]={product['quantity']}")
+        
+        sign_src = "&".join(sign_parts)
+        digest = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
         payload["signature"] = digest
+        
+        logger.info("payform.sign.minimal: %s", sign_src)
+        logger.info("payform.signature: %s", digest)
 
     # Собираем финальный query уже с url-энкодингом (это ок — подпись считали до энкодинга)
     from urllib.parse import quote_plus
