@@ -94,21 +94,8 @@ def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
         else:
             flat_data[key] = value
     
-    # Сортируем ключи (как делает PHP)
-    # Но сначала устанавливаем правильный порядок как в демо-ссылке
-    priority_order = ["order_id", "products", "customer_extra", "do", "urlReturn", "urlSuccess", "urlNotification", "signature"]
-    
-    # Сортируем с учетом приоритета
-    def sort_key(item):
-        key = item[0]
-        if key.startswith("products["):
-            return (1, key)  # products идут после order_id
-        elif key in priority_order:
-            return (0, priority_order.index(key))
-        else:
-            return (2, key)  # остальные в конце
-    
-    sorted_items = sorted(flat_data.items(), key=sort_key)
+    # Сортируем ключи алфавитно (как делает PHP)
+    sorted_items = sorted(flat_data.items())
     
     # Создаем строку подписи (БЕЗ URL-кодирования, как в PHP)
     sign_parts = []
