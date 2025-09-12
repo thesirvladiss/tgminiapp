@@ -115,7 +115,7 @@ def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
     
     # Остальные параметры
     for key, value in sign_data.items():
-        if key not in ["order_id", "customer_phone", "products"]:
+        if key not in ["do", "order_id", "customer_phone", "products"]:
             flat_data[key] = value
     
     # Сортируем ключи (как делает PHP)
