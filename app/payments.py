@@ -52,21 +52,20 @@ def build_payform_link(data: Dict[str, Any]) -> str:
         payload["signature"] = signature
         logger.info("payform.signature: %s", signature)
     
-    # Строим query string
-    from urllib.parse import urlencode
-    query_parts = []
-    
-    # Обрабатываем products отдельно (нужны скобки)
+    # Создаем плоский словарь для urlencode (как в PHP http_build_query)
+    flat_data = {}
     for key, value in payload.items():
         if key == "products":
             for i, product in enumerate(value):
-                query_parts.append(f"products[{i}][name]={product['name']}")
-                query_parts.append(f"products[{i}][price]={product['price']}")
-                query_parts.append(f"products[{i}][quantity]={product['quantity']}")
+                flat_data[f"products[{i}][name]"] = product['name']
+                flat_data[f"products[{i}][price]"] = product['price']
+                flat_data[f"products[{i}][quantity]"] = product['quantity']
         else:
-            query_parts.append(f"{key}={value}")
+            flat_data[key] = value
     
-    query = "&".join(query_parts)
+    # Используем urlencode для правильного кодирования
+    from urllib.parse import urlencode
+    query = urlencode(flat_data, doseq=True)
     link = f"{base}?{query}"
     
     logger.info("payform.link: %s", link)
@@ -96,7 +95,20 @@ def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
             flat_data[key] = value
     
     # Сортируем ключи (как делает PHP)
-    sorted_items = sorted(flat_data.items())
+    # Но сначала устанавливаем правильный порядок как в демо-ссылке
+    priority_order = ["order_id", "products", "customer_extra", "do", "urlReturn", "urlSuccess", "urlNotification", "signature"]
+    
+    # Сортируем с учетом приоритета
+    def sort_key(item):
+        key = item[0]
+        if key.startswith("products["):
+            return (1, key)  # products идут после order_id
+        elif key in priority_order:
+            return (0, priority_order.index(key))
+        else:
+            return (2, key)  # остальные в конце
+    
+    sorted_items = sorted(flat_data.items(), key=sort_key)
     
     # Создаем строку подписи (БЕЗ URL-кодирования, как в PHP)
     sign_parts = []
