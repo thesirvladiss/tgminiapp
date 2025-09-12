@@ -69,10 +69,10 @@ def _flatten_prodamus(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
                             for sk, sv in pval.items():
                                 if sv is None:
                                     continue
-                                add_pair(f"products[{idx}]{pkey}[{sk}]", sv)
+                                add_pair(f"products[{idx}][{pkey}][{sk}]", sv)
                         else:
                             # products[{idx}]name=..., price=..., quantity=...
-                            add_pair(f"products[{idx}]{pkey}", pval)
+                            add_pair(f"products[{idx}][{pkey}]", pval)
                 else:
                     # non-dict product element (unlikely)
                     add_pair(f"products[{idx}]", item)
@@ -118,11 +118,18 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     digest = ""
     if settings.payform_secret:
         try:
-            flat_for_sign = _flatten_prodamus(payload)
-            flat_for_sign.sort(key=lambda kv: kv[0])
-            sign_src = "&".join(f"{k}={v}" for k, v in flat_for_sign)
+            # Exclude URL routing params from signature (often not included by provider)
+            sign_payload = {k: v for k, v in payload.items() if k not in {"urlReturn", "urlSuccess", "urlNotification", "signature"}}
+            flat_for_sign = _flatten_prodamus(sign_payload)
+            # Build sign source EXACTLY like http_build_query (URL-encoded, same order)
+            from urllib.parse import quote_plus
+            sign_src = "&".join(f"{quote_plus(str(k))}={quote_plus(str(v))}" for k, v in flat_for_sign)
             digest = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
             payload["signature"] = digest
+            try:
+                logger.info("payform.sign.keys: %s", [k for k, _ in flat_for_sign])
+            except Exception:
+                pass
         except Exception:
             pass
 
