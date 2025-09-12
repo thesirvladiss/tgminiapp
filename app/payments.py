@@ -107,8 +107,9 @@ def _create_signature(payload: Dict[str, Any], secret_key: str) -> str:
     flat = _flatten_prodamus(data)
     # 3) Сортируем по ключу
     flat.sort(key=lambda kv: kv[0])
-    # 4) Склеиваем БЕЗ url-энкодинга
-    sign_src = "&".join(f"{k}={v}" for k, v in flat)
+    # 4) Склеиваем С url-энкодингом (как в итоговой ссылке)
+    from urllib.parse import quote_plus
+    sign_src = "&".join(f"{quote_plus(str(k))}={quote_plus(str(v))}" for k, v in flat)
     # 5) HMAC-SHA256 в hex
     return hmac.new(secret_key.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
 
@@ -123,7 +124,9 @@ def build_payform_link(data: Dict[str, Any]) -> str:
         data_for_sign = {k: v for k, v in payload.items() if k != "signature" and v is not None}
         flat_for_sign = _flatten_prodamus(data_for_sign)
         flat_for_sign.sort(key=lambda kv: kv[0])
-        sign_src = "&".join(f"{k}={v}" for k, v in flat_for_sign)
+        # Попробуем с URL-кодированием (как в итоговой ссылке)
+        from urllib.parse import quote_plus
+        sign_src = "&".join(f"{quote_plus(str(k))}={quote_plus(str(v))}" for k, v in flat_for_sign)
         
         logger.info("payform.sign.keys: %s", [k for k, v in flat_for_sign])
         logger.info("payform.sign.src: %s", sign_src)
