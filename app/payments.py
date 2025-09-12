@@ -94,7 +94,7 @@ def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
         else:
             flat_data[key] = value
     
-    # Сортируем ключи алфавитно (как делает PHP)
+    # Сортируем ключи (как делает PHP)
     sorted_items = sorted(flat_data.items())
     
     # Создаем строку подписи (БЕЗ URL-кодирования, как в PHP)
