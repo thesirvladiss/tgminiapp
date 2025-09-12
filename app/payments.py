@@ -71,8 +71,8 @@ def _flatten_prodamus(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
                                     continue
                                 add_pair(f"products[{idx}]{pkey}[{sk}]", sv)
                         else:
-                            # products[{idx}]name=..., price=..., quantity=...
-                            add_pair(f"products[{idx}]{pkey}", pval)
+                            # products[{idx}][name]=..., price=..., quantity=...
+                            add_pair(f"products[{idx}][{pkey}]", pval)
                 else:
                     # non-dict product element (unlikely)
                     add_pair(f"products[{idx}]", item)
@@ -101,8 +101,8 @@ def _flatten_prodamus(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
 
 
 def _create_signature(payload: Dict[str, Any], secret_key: str) -> str:
-    # 1) Берём все поля, кроме signature и URL-параметров
-    data = {k: v for k, v in payload.items() if k not in {"signature", "urlReturn", "urlSuccess", "urlNotification"} and v is not None}
+    # 1) Берём все поля, кроме signature
+    data = {k: v for k, v in payload.items() if k != "signature" and v is not None}
     # 2) Плосим PHP-стилем (products[0][name], ...)
     flat = _flatten_prodamus(data)
     # 3) Сортируем по ключу
@@ -119,8 +119,8 @@ def build_payform_link(data: Dict[str, Any]) -> str:
 
     # СЧИТАЕМ подпись по тем же правилам, что и у вебхука/доки
     if settings.payform_secret:
-        # Логируем что именно подписываем (исключаем URL-параметры)
-        data_for_sign = {k: v for k, v in payload.items() if k not in {"signature", "urlReturn", "urlSuccess", "urlNotification"} and v is not None}
+        # Логируем что именно подписываем (включаем все параметры)
+        data_for_sign = {k: v for k, v in payload.items() if k != "signature" and v is not None}
         flat_for_sign = _flatten_prodamus(data_for_sign)
         flat_for_sign.sort(key=lambda kv: kv[0])
         sign_src = "&".join(f"{k}={v}" for k, v in flat_for_sign)
