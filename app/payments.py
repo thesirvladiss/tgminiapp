@@ -113,38 +113,26 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     base = settings.payform_url.rstrip("/") + "/"
     payload = {k: v for k, v in data.items() if v is not None}
 
-    # Helper: PHP-like encoder preserving insertion order and bracketed keys
-    from urllib.parse import quote_plus
-    def encode_pairs(obj: Any, prefix: str | None = None, acc: List[str] | None = None) -> List[str]:
-        if acc is None:
-            acc = []
-        if isinstance(obj, dict):
-            for k, v in obj.items():
-                key = f"{prefix}[{k}]" if prefix else str(k)
-                encode_pairs(v, key, acc)
-        elif isinstance(obj, list):
-            for idx, item in enumerate(obj):
-                key = f"{prefix}[{idx}]" if prefix else str(idx)
-                encode_pairs(item, key, acc)
-        else:
-            if obj is None:
-                return acc
-            acc.append(f"{quote_plus(prefix or '')}={quote_plus(str(obj))}")
-        return acc
-
-    # Signature first: build query of payload WITHOUT signature using same encoder
+    # Signature first: raw flattened pairs (without URL encoding), keys like products[0]name
     sign_src = ""
     digest = ""
     if settings.payform_secret:
         try:
-            sign_src = "&".join(encode_pairs(payload))
+            flat_for_sign = _flatten_prodamus(payload)
+            flat_for_sign.sort(key=lambda kv: kv[0])
+            sign_src = "&".join(f"{k}={v}" for k, v in flat_for_sign)
             digest = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
             payload["signature"] = digest
         except Exception:
             pass
 
-    # Now build final query including signature
-    query = "&".join(encode_pairs(payload))
+    # Now build final query including signature using same flattened keys but URL-encoded
+    from urllib.parse import quote_plus
+    flat_pairs = _flatten_prodamus(payload)
+    query_parts: List[str] = []
+    for k, v in flat_pairs:
+        query_parts.append(f"{quote_plus(str(k))}={quote_plus(str(v))}")
+    query = "&".join(query_parts)
     link = f"{base}?{query}" if query else base
     try:
         logger.info(
