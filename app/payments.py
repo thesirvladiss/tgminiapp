@@ -58,6 +58,8 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     query_parts = []
     
     # Добавляем параметры в нужном порядке
+    if "do" in payload:
+        query_parts.append(f"do={payload['do']}")
     if "order_id" in payload:
         query_parts.append(f"order_id={payload['order_id']}")
     if "customer_phone" in payload:
@@ -72,7 +74,7 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     
     # Остальные параметры
     for key, value in payload.items():
-        if key not in ["order_id", "customer_phone", "products"]:
+        if key not in ["do", "order_id", "customer_phone", "products"]:
             query_parts.append(f"{key}={value}")
     
     query = "&".join(query_parts)
@@ -97,6 +99,8 @@ def create_signature(payload: Dict[str, Any], secret_key: str) -> str:
     flat_data = {}
     
     # Добавляем параметры в правильном порядке
+    if "do" in sign_data:
+        flat_data["do"] = sign_data["do"]
     if "order_id" in sign_data:
         flat_data["order_id"] = sign_data["order_id"]
     if "customer_phone" in sign_data:
