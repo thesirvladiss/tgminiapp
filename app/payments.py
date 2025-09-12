@@ -69,7 +69,7 @@ def _flatten_prodamus(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
                             for sk, sv in pval.items():
                                 if sv is None:
                                     continue
-                                add_pair(f"products[{idx}]{pkey}[{sk}]", sv)
+                                add_pair(f"products[{idx}][{pkey}][{sk}]", sv)
                         else:
                             # products[{idx}][name]=..., price=..., quantity=...
                             add_pair(f"products[{idx}][{pkey}]", pval)
@@ -101,62 +101,33 @@ def _flatten_prodamus(data: Dict[str, Any]) -> List[Tuple[str, Any]]:
 
 
 def _create_signature(payload: Dict[str, Any], secret_key: str) -> str:
-    # 1) Берём все поля, кроме signature
+    # все поля, кроме 'signature'
     data = {k: v for k, v in payload.items() if k != "signature" and v is not None}
-    # 2) Плосим PHP-стилем (products[0][name], ...)
-    flat = _flatten_prodamus(data)
-    # 3) Сортируем по ключу
-    flat.sort(key=lambda kv: kv[0])
-    # 4) Склеиваем С url-энкодингом (как в итоговой ссылке)
-    from urllib.parse import quote_plus
-    sign_src = "&".join(f"{quote_plus(str(k))}={quote_plus(str(v))}" for k, v in flat)
-    # 5) HMAC-SHA256 в hex
+    flat = _flatten_prodamus(data)                 # products[0][name] и т.п.
+    flat.sort(key=lambda kv: kv[0])                # сортировка по ключу
+    sign_src = "&".join(f"{k}={v}" for k, v in flat)  # БЕЗ url-энкодинга
     return hmac.new(secret_key.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
+
 
 
 def build_payform_link(data: Dict[str, Any]) -> str:
     base = settings.payform_url.rstrip("/") + "/"
     payload = {k: v for k, v in data.items() if v is not None}
 
-    # МИНИМУМ: только обязательные поля для подписи
     if settings.payform_secret:
-        # Только основные поля без URL-параметров
-        min_payload = {
-            "do": payload.get("do"),
-            "order_id": payload.get("order_id"),
-            "products": payload.get("products")
-        }
-        
-        # Простые ключи без скобок
-        sign_parts = []
-        sign_parts.append(f"do={min_payload['do']}")
-        sign_parts.append(f"order_id={min_payload['order_id']}")
-        
-        # Продукты в простом формате
-        for i, product in enumerate(min_payload['products']):
-            sign_parts.append(f"products[{i}][name]={product['name']}")
-            sign_parts.append(f"products[{i}][price]={product['price']}")
-            sign_parts.append(f"products[{i}][quantity]={product['quantity']}")
-        
-        sign_src = "&".join(sign_parts)
-        digest = hmac.new(settings.payform_secret.encode("utf-8"), sign_src.encode("utf-8"), hashlib.sha256).hexdigest()
-        payload["signature"] = digest
-        
-        logger.info("payform.sign.minimal: %s", sign_src)
-        logger.info("payform.signature: %s", digest)
+        # лог: что именно подписываем
+        flat_for_sign = _flatten_prodamus({k: v for k, v in payload.items() if k != "signature"})
+        flat_for_sign.sort(key=lambda kv: kv[0])
+        sign_src = "&".join(f"{k}={v}" for k, v in flat_for_sign)
+        logger.info("payform.sign.keys: %s", [k for k, _ in flat_for_sign])
+        logger.info("payform.sign.src: %s", sign_src)
 
-    # Собираем финальный query уже с url-энкодингом (это ок — подпись считали до энкодинга)
+        payload["signature"] = _create_signature(payload, settings.payform_secret)
+
+    # Затем уже формируем ссылку с URL-энкодингом
     from urllib.parse import quote_plus
-    flat_pairs = _flatten_prodamus(payload)
-    query = "&".join(f"{quote_plus(str(k))}={quote_plus(str(v))}" for k, v in flat_pairs)
-    link = f"{base}?{query}" if query else base
-
-    try:
-        logger.info("payform.sign: base=%s order_id=%s signature=%s", base, payload.get("order_id"), payload.get("signature"))
-        logger.info("payform.link: preview=%s", (link[:512] + ("..." if len(link) > 512 else "")))
-    except Exception:
-        pass
-    return link
+    query = "&".join(f"{quote_plus(str(k))}={quote_plus(str(v))}" for k, v in _flatten_prodamus(payload))
+    return f"{base}?{query}" if query else base
 
 @router.post("/link")
 async def create_payment_link(
