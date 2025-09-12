@@ -69,7 +69,7 @@ def build_payform_link(data: Dict[str, Any]) -> str:
     query = "&".join(query_parts)
     link = f"{base}?{query}"
     
-    logger.info("payform.link: %s", link[:200] + "..." if len(link) > 200 else link)
+    logger.info("payform.link: %s", link)
     return link
 
 
